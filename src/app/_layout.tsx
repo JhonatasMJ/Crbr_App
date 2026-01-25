@@ -5,7 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
     </SafeAreaProvider>
   );
