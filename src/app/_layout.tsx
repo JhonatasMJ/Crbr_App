@@ -1,12 +1,41 @@
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import '@/src/styles/global.css';
+
+import { NAV_THEME } from '@/src/lib/theme';
+import { ThemeProvider } from '@react-navigation/native';
+import { PortalHost } from '@rn-primitives/portal';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useColorScheme } from 'nativewind';
+import {
+  useFonts,
+  TitilliumWeb_400Regular,
+  TitilliumWeb_600SemiBold,
+  TitilliumWeb_700Bold,
+} from '@expo-google-fonts/titillium-web';
+import { ActivityIndicator, View } from 'react-native';
 
 export default function RootLayout() {
+  const { colorScheme } = useColorScheme();
+
+  const [fontsLoaded] = useFonts({
+    TitilliumRegular: TitilliumWeb_400Regular,
+    TitilliumSemiBold: TitilliumWeb_600SemiBold,
+    TitilliumBold: TitilliumWeb_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large"  className='text-primary'/>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaProvider>
+    <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="auto" />
-    </SafeAreaProvider>
+      <PortalHost />
+    </ThemeProvider>
   );
 }

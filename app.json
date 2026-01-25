@@ -13,7 +13,7 @@
     "icon": "./assets/images/play_store_512.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "br.tribustec.Crbr",
@@ -62,8 +62,7 @@
           "faceIDPermission": "Permitir autenticação por Face ID"
         }
       ],
-      "expo-font",
-      "expo-web-browser"
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
