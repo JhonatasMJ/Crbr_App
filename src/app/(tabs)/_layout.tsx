@@ -1,7 +1,6 @@
 import { Tabs } from "expo-router";
-import { Home, Map } from "lucide-react-native";
+import { Home } from "lucide-react-native";
 import React from "react";
-
 export default function TabLayout() {
   return (
     <Tabs
@@ -17,13 +16,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Home size={28} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => <Map size={28} color={color} />,
-        }}
-      />
+
     </Tabs>
   );
 }
