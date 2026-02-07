@@ -4,30 +4,20 @@
 
 @layer base {
   :root {
-    /* BACKGROUND */
     --background: 0 0% 1.2%;
     --foreground: 0 0% 98%;
-
-    /* PRIMARY */
     --primary: 45 100% 50%;
     --primary-foreground: 0 0% 9%;
-
-    /* SECONDARY (AQUI ESTÁ A COR CERTA) */
     --secondary: 0 0% 6.7%;
     --secondary-foreground: 0 0% 92%;
-
-    /* CARD / POPOVER */
     --card: 0 0% 6.7%;
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 6.7%;
     --popover-foreground: 0 0% 98%;
-
-    /* UTILS */
     --muted: 0 0% 8%;
     --muted-foreground: 0 0% 60%;
     --accent: 0 0% 6.7%;
     --accent-foreground: 0 0% 98%;
-
     --border: 0 0% 14%;
     --input: 0 0% 14%;
     --ring: 45 100% 50%;
