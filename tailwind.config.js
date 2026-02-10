@@ -1,73 +1,40 @@
-const { hairlineWidth } = require('nativewind/theme');
+const { hairlineWidth } = require("nativewind/theme");
+const { colors } = require("./src/themes/colors");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
-  content: ['./src/**/*.{ts,tsx}'],
-  presets: [require('nativewind/preset')],
+  darkMode: "class",
+  content: ["./src/**/*.{ts,tsx}"],
+  presets: [require("nativewind/preset")],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['TitilliumRegular'],
-        'sans-semibold': ['TitilliumSemiBold'],
-        'sans-bold': ['TitilliumBold'],
+        sans: ["TitilliumRegular"],
+        "sans-semibold": ["TitilliumSemiBold"],
+        "sans-bold": ["TitilliumBold"],
       },
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        background: colors.background,
+        foreground: colors.foreground,
+
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: colors.primary,
+          foreground: "#000000",
         },
+
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: colors.secondary,
+          foreground: "#000000",
         },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
+
+        border: "#262626",
+        input: "#262626",
+        ring: colors.primary,
       },
       borderWidth: {
         hairline: hairlineWidth(),
       },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
     },
   },
-  future: {
-    hoverOnlyWhenSupported: true,
-  },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require("tailwindcss-animate")],
 };
