@@ -1,6 +1,6 @@
 # Crbr Investimentos App 🎯💵
 
-<img src="./assets/Target.png" />
+<img src="./assets/images/CRBR.png" />
 
 &nbsp;
 
@@ -11,13 +11,13 @@
 
 ## 💻 Funcionalidades do projeto
 
-* Resumo Geral de Metas
-* Criar Meta
-* Editar Meta
-* Excluir Meta
-* Criar Transação(Entrada ou Saída)
-* Editar Transação(Entrada ou Saída)
-* Excluir Transação(Entrada ou Saída)
+* Login/Cadastro
+* Troca de senha
+* Criar/Editar/Excluir Investimento
+* Criar/Editar/Excluir beneficiário
+* Editar Perfil
+* Gráficos de investimentos
+* Sacar Investimentos
 &nbsp;
 
 ## 🎨 Telas do projeto
