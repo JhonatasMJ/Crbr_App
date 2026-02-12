@@ -1,73 +1,44 @@
-# Minimal Template
+# Crbr Investimentos App 🎯💵
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
+<img src="./assets/Target.png" />
 
-It was initialized using the following command:
+&nbsp;
 
-```bash
-npx @react-native-reusables/cli@latest init -t my-app
-```
+## 📚 Informações sobre o projeto
 
-## Getting Started
+* O projeto consiste em um aplicativo de gerenciamento de investimentos para o cliente CRBR Investimentos, onde o usuário pode criar e acompanhar seus investimentos, após ser aprovado pelo administrador em nosso dashboard gerencial.
+&nbsp;
 
-To run the development server:
+## 💻 Funcionalidades do projeto
 
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
+* Resumo Geral de Metas
+* Criar Meta
+* Editar Meta
+* Excluir Meta
+* Criar Transação(Entrada ou Saída)
+* Editar Transação(Entrada ou Saída)
+* Excluir Transação(Entrada ou Saída)
+&nbsp;
 
-This will start the Expo Dev Server. Open the app in:
+## 🎨 Telas do projeto
 
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
+<img src="./assets/Telas.png" />
 
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
+&nbsp;
 
-## Adding components
+## 🛠️ Tecnologias/Ferramentas utilizadas
 
-You can add more reusable components using the CLI:
-
-```bash
-npx react-native-reusables/cli@latest add [...components]
-```
-
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
-
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
-
-## Project Features
-
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
-
-## Learn More
-
-To dive deeper into the technologies used:
-
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
-
-## Deploy with EAS
-
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
-
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+* React Native
+* Expo
+* Typescript
+* NativeWind
+* React Native Reusables
+* React Hook Form
+* TanStack Query
+&nbsp;
 
 ---
 
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+<p align="center">Feito com 🧡 por <a href="https://jhonatas-portfolio.vercel.app/">Jhonatas Micael</a></p>
+
+
