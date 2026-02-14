@@ -7,7 +7,7 @@ export function InputLabel({ label, ...rest }: { label: string } & ComponentProp
   return (
     <View>
       <Text className="text-primary font-sans-semibold text-xl mb-2">{label}</Text>
-      <Input {...rest}/>
+      <Input   {...rest}/>
     </View>
 
   )
