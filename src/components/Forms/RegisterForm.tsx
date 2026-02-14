@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { maskCPF } from "@/utils/cpfMask";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Text } from "../ui/text";
 export function RegisterForm() {
 const [cpf, setCpf] = useState("");
 
   return (
-    <View className="px-6 py-12 gap-12">
+    <View className=" gap-12">
       <InputLabel label="Nome Completo" placeholder="Digite seu nome completo" />
       <InputLabel label="Email" placeholder="Digite seu email" />
       <InputLabel label="CPF" placeholder="Digite seu CPF"   onChangeRawText={(raw) => setCpf(raw)}   maskFunction={maskCPF} />
