@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
 import { colors } from "@/themes/colors";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -115,17 +115,18 @@ export default function Index() {
                 </Button>
               </Link>
 
-              <Link href="/(auth)/login" asChild>
+          
                 <Button
                   size="xl"
                   variant="ghost"
                   className="border-2 border-primary bg-transparent"
+                  onPress={() => router.push("/(auth)/login")}
                 >
                   <Text className="font-sans-bold text-lg text-primary">
                     Entrar
                   </Text>
                 </Button>
-                </Link>
+             
               </View>
             </View>
           </View>

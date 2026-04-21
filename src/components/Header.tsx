@@ -4,13 +4,22 @@ import { HeaderProps } from "../types/header";
 import Logo from "@/assets/logoSvg.svg";
 import { Button } from "./ui/button";
 import { ChevronLeft } from "lucide-react-native";
+import { router } from "expo-router";
 
 export function Header({ span, title }: HeaderProps) {
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  }
+
   return (
     <View className="bg-primary h-48 rounded-b-xl p-6">
       <View className="relative flex-row items-center justify-center">
-        <View className="absolute left-0">
-          <Button size="icon" className="bg-secondary">
+        <View className="absolute left-0 z-10">
+          <Button onPress={handleBack} size="icon" className="bg-secondary">
             <ChevronLeft size={20} color="#fff" />
           </Button>
         </View>
