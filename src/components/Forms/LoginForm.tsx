@@ -7,16 +7,26 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Text, View } from "react-native";
 import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { LoginParams } from "@/types/loginParams";
+import { loginSchema } from "@/shared/schemas/loginSchema";
 
-type LoginFields = {
-  email: string;
-  password: string;
-};
 
 export function LoginForm() {
-  const { control } = useForm<LoginFields>({
-    defaultValues: { email: "", password: "" },
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<LoginParams>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    resolver: yupResolver(loginSchema),
   });
+  function handleLogin(data: LoginParams) {
+    console.log(data);
+  }
   const [remember, setRemember] = useState(false);
 
   function toggleRemember() {
@@ -57,7 +67,7 @@ export function LoginForm() {
           Esqueci a senha
         </Link>
       </View>
-      <Button className="bg-primary" size="xl">
+      <Button className="bg-primary" size="xl" onPress={handleSubmit(handleLogin)} disabled={isSubmitting}>
         <Text className="font-sans-bold text-lg">Entrar</Text>
       </Button>
       <View className="flex-row justify-center">

@@ -28,7 +28,7 @@ export function RegisterForm({ onNext }: { onNext: () => void }) {
   });
 
   return (
-    <View className="gap-12">
+    <View className="gap-10">
       <InputLabel
         control={control}
         name="name"

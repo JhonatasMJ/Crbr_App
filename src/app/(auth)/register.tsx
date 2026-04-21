@@ -1,6 +1,11 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
-import { Text } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+} from "react-native";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
 import { RegisterForm } from "@/components/Forms/RegisterForm";
@@ -18,28 +23,44 @@ export default function Register() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background ">
-      <Header span="Bem Vindo(a)" title="Crie sua conta" />
+    <SafeAreaView className="flex-1 bg-background">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        className="flex-1"
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingBottom: 40,
+          }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Header span="Bem Vindo(a)" title="Crie sua conta" />
 
-      <Tabs value={value} onValueChange={setValue} className="mt-6">
-        <TabsList className="bg-secondary ">
-          <TabsTrigger value="account">Pessoais</TabsTrigger>
-          <TabsTrigger value="contact">Contato</TabsTrigger>
-          <TabsTrigger value="password">Senha</TabsTrigger>
-        </TabsList>
+          <Tabs value={value} onValueChange={setValue} className="mt-6">
+            <TabsList className="bg-secondary ">
+              <TabsTrigger value="account">Pessoais</TabsTrigger>
+              <TabsTrigger value="contact">Contato</TabsTrigger>
+              <TabsTrigger value="password">Senha</TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="account">
-          <RegisterForm onNext={handleNextTab} />
-        </TabsContent>
+            <TabsContent value="account">
+              <RegisterForm onNext={handleNextTab} />
+            </TabsContent>
 
-        <TabsContent value="contact">
-        <ContactForm onNext={handleNextTab} />
-        </TabsContent>
+            <TabsContent value="contact">
+              <ContactForm onNext={handleNextTab} />
+            </TabsContent>
 
-        <TabsContent value="password">
-          <Text className="text-white">Conteúdo de senha</Text>
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="password">
+              <Text className="text-white">Conteúdo de senha</Text>
+            </TabsContent>
+          </Tabs>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

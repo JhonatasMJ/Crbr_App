@@ -20,7 +20,7 @@ export function InputLabel<TFieldValues extends FieldValues>({
 }: InputLabelProps<TFieldValues>) {
   return (
     <View>
-      <Text className="text-primary font-sans-semibold text-xl mb-2">
+      <Text className="text-primary font-sans-semibold text-xl mb-1">
         {label}
       </Text>
       <Controller
@@ -30,7 +30,7 @@ export function InputLabel<TFieldValues extends FieldValues>({
           <>
             <Input {...inputRest} value={value ?? ""} onChangeText={onChange} />
 
-            {error && <ErrorMessage>{error.message}</ErrorMessage>}
+            {error ? <ErrorMessage>{error.message}</ErrorMessage> : null}
           </>
         )}
       />
