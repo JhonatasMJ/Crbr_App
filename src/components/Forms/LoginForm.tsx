@@ -6,7 +6,17 @@ import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Text, View } from "react-native";
+import { useForm } from "react-hook-form";
+
+type LoginFields = {
+  email: string;
+  password: string;
+};
+
 export function LoginForm() {
+  const { control } = useForm<LoginFields>({
+    defaultValues: { email: "", password: "" },
+  });
   const [remember, setRemember] = useState(false);
 
   function toggleRemember() {
@@ -16,8 +26,18 @@ export function LoginForm() {
 
   return (
     <View className="px-6 py-12 gap-12">
-      <InputLabel label="Email" placeholder="Digite seu email" />
-      <InputPassword label="Senha" placeholder="Digite sua senha" />
+      <InputLabel
+        control={control}
+        name="email"
+        label="Email"
+        placeholder="Digite seu email"
+      />
+      <InputPassword
+        control={control}
+        name="password"
+        label="Senha"
+        placeholder="Digite sua senha"
+      />
       <View className="flex-row justify-between">
         <View className="flex-row items-center gap-3">
           <Checkbox

@@ -2,34 +2,58 @@ import { InputLabel } from "@/components/InputLabel";
 import { Button } from "@/components/ui/button";
 import { maskCPF } from "@/shared/utils/cpfMask";
 import { Link } from "expo-router";
-import { useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 import { Text } from "../ui/text";
-export function RegisterForm({ onNext }: { onNext: () => void }) {
-  const [cpf, setCpf] = useState("");
+import { useForm } from "react-hook-form";
+import { RegisterPersonalStep } from "@/types/registerParams";
+import { registerSchema } from "@/shared/schemas/registerSchema";
+import { yupResolver } from "@hookform/resolvers/yup";
 
+export function RegisterForm({ onNext }: { onNext: () => void }) {
   function handleNext() {
-    if (!cpf) {
-      Alert.alert("CPF é obrigatório");
-      return;
-    }
     onNext();
   }
+
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<RegisterPersonalStep>({
+    defaultValues: {
+      name: "",
+      email: "",
+      cpf: "",
+    },
+    resolver: yupResolver(registerSchema),
+  });
 
   return (
     <View className="gap-12">
       <InputLabel
+        control={control}
+        name="name"
         label="Nome Completo"
         placeholder="Digite seu nome completo"
       />
-      <InputLabel label="Email" placeholder="Digite seu email" />
       <InputLabel
+        control={control}
+        name="email"
+        label="Email"
+        placeholder="Digite seu email"
+      />
+      <InputLabel
+        control={control}
+        name="cpf"
         label="CPF"
         placeholder="Digite seu CPF"
-        onChangeRawText={(raw) => setCpf(raw)}
         maskFunction={maskCPF}
       />
-      <Button className="bg-primary" size="xl" onPress={handleNext}>
+      <Button
+        className="bg-primary"
+        size="xl"
+        onPress={handleSubmit(handleNext)}
+        disabled={isSubmitting}
+      >
         <Text className="font-sans-bold text-lg">Próximo</Text>
       </Button>
       <View className="flex-row justify-center">
