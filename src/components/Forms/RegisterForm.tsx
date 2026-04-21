@@ -28,7 +28,12 @@ export function RegisterForm({
         placeholder="Digite seu email"
       />
 
-      <InputLabel control={control} name="cpf" label="CPF" maskFunction={maskCPF} placeholder="Digite seu CPF" />
+      <InputLabel 
+      control={control} 
+      name="cpf" 
+      label="CPF" 
+      maskFunction={maskCPF} 
+      placeholder="Digite seu CPF" />
 
       <Button className="bg-primary" size="xl" onPress={() => void onNext()}>
         <Text className="font-sans-bold text-lg">Próximo</Text>

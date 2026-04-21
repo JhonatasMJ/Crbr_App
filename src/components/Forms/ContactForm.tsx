@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "expo-router";
 import { View } from "react-native";
 import { Text } from "../ui/text";
+import { maskDate } from "@/shared/utils/dateMask";
 
 export function ContactForm({
   control,
@@ -26,6 +27,7 @@ export function ContactForm({
         name="birthDate"
         label="Data de nascimento"
         placeholder="DD/MM/AAAA"
+        maskFunction={maskDate}
       />
       <InputLabel
         control={control}
