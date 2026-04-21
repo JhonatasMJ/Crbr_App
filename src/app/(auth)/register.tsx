@@ -4,9 +4,18 @@ import { Text } from "react-native";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
 import { RegisterForm } from "@/components/Forms/RegisterForm";
+import { ContactForm } from "@/components/Forms/ContactForm";
 
 export default function Register() {
   const [value, setValue] = useState("account");
+  const steps = ["account", "contact", "password"];
+
+  function handleNextTab() {
+     const currentIndex = steps.indexOf(value);
+     if (currentIndex < steps.length - 1) {
+      setValue(steps[currentIndex + 1]);
+     }
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background ">
@@ -20,11 +29,11 @@ export default function Register() {
         </TabsList>
 
         <TabsContent value="account">
-          <RegisterForm />
+          <RegisterForm onNext={handleNextTab} />
         </TabsContent>
 
         <TabsContent value="contact">
-          <Text className="text-white">Conteúdo de contato</Text>
+        <ContactForm onNext={handleNextTab} />
         </TabsContent>
 
         <TabsContent value="password">

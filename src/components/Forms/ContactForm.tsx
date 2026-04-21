@@ -1,13 +1,17 @@
 import { InputLabel } from "@/components/InputLabel";
 import { Button } from "@/components/ui/button";
-import { maskCPF } from "@/shared/utils/cpfMask";
 import { Link } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";
 import { Text } from "../ui/text";
-export function RegisterForm({ onNext }: { onNext: () => void }) {
+
+
+
+
+export function ContactForm({ onNext }: { onNext: () => void }) {
   const [cpf, setCpf] = useState("");
 
+  
   function handleNext() {
     if (!cpf) {
       Alert.alert("CPF é obrigatório");
@@ -19,15 +23,14 @@ export function RegisterForm({ onNext }: { onNext: () => void }) {
   return (
     <View className="gap-12">
       <InputLabel
-        label="Nome Completo"
-        placeholder="Digite seu nome completo"
+        label="Telefone"
+        placeholder="Digite seu telefone"
       />
-      <InputLabel label="Email" placeholder="Digite seu email" />
+      <InputLabel label="Data de nascimento" placeholder="DD/MM/AAAA" />
+
       <InputLabel
-        label="CPF"
-        placeholder="Digite seu CPF"
-        onChangeRawText={(raw) => setCpf(raw)}
-        maskFunction={maskCPF}
+        label="Email"
+        placeholder="Digite seu email"
       />
       <Button className="bg-primary" size="xl" onPress={handleNext}>
         <Text className="font-sans-bold text-lg">Próximo</Text>

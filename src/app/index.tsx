@@ -85,11 +85,13 @@ export default function Index() {
               </Text>
 
               <View className="mt-16 gap-6">
+                <Link href="/(auth)/register" asChild>
                 <Button size="xl" className="bg-primary">
                   <Text className="text-secondary font-sans-bold text-lg">
                     Criar Conta
                   </Text>
                 </Button>
+                </Link>
 
                 <Link href="/(auth)/login" asChild>
                   <Button
