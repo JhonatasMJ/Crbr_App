@@ -14,16 +14,14 @@ export default function DrawerLayout() {
         drawerInactiveTintColor: "#888",
       }}
     >
-      {/* 👇 IMPORTANTE: só um entry point das tabs */}
       <Drawer.Screen
         name="(tabs)"
-        options={{ title: "Home" }}
+        options={{
+          drawerItemStyle: { display: "none" },
+        }}
       />
 
-      <Drawer.Screen
-        name="profile"
-        options={{ title: "Perfil" }}
-      />
+      <Drawer.Screen name="profile" options={{ title: "Perfil" }} />
     </Drawer>
   );
 }

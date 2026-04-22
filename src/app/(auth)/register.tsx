@@ -63,7 +63,7 @@ export default function Register() {
   /* Redireciona para a tela de login se o usuário estiver logado */
   useEffect(() => {
     if (user) {
-      router.replace("/(tabs)/home");
+      router.replace("/(drawer)/(tabs)");
     }
   }, [user]);
 

@@ -5,7 +5,7 @@ import { Link, router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LoginParams } from "@/types/loginParams";
@@ -25,10 +25,10 @@ export function LoginForm() {
     resolver: yupResolver(loginSchema),
   });
   const [remember, setRemember] = useState(false);
-  const { login, loading, user} = useAuth();
+  const { login, loading, user } = useAuth();
 
   
-/* Redireciona para a tela de home se o usuário estiver logado */
+  /* Redireciona para a tela de home se o usuário estiver logado */
   useEffect(() => {
     if (user) {
       router.replace("/(drawer)/(tabs)");
@@ -37,7 +37,12 @@ export function LoginForm() {
 
   /* Faz Login */
   async function handleLogin(data: LoginParams) {
-    await login(data);
+    try {
+      await login(data);
+      router.replace("/(drawer)/(tabs)");
+    } catch (error) {
+      Alert.alert("Falha no login", "Email ou senha invalidos.");
+    }
   }
 
   /* Toggle Remember */
@@ -79,8 +84,17 @@ export function LoginForm() {
           Esqueci a senha
         </Link>
       </View>
-      <Button className="bg-primary" size="xl" onPress={handleSubmit(handleLogin)} disabled={isSubmitting}>
-        {loading ? <ActivityIndicator size="small" className="text-black" /> : <Text className="font-sans-bold text-lg">Entrar</Text>}
+      <Button
+        className="bg-primary"
+        size="xl"
+        onPress={handleSubmit(handleLogin)}
+        disabled={isSubmitting}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" className="text-black" />
+        ) : (
+          <Text className="font-sans-bold text-lg">Entrar</Text>
+        )}
       </Button>
       <View className="flex-row justify-center">
         <Text className="text-white font-sans">Não tem uma conta?</Text>
