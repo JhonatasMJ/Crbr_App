@@ -21,6 +21,7 @@ import { LoginParams } from "@/types/loginParams";
 type AuthContextType = {
   register: (data: RegisterParams) => Promise<void>;
   loading: boolean;
+  initializing: boolean;
   user: FirebaseUser | null;
   login: (data: LoginParams) => Promise<void>;
   logout: () => Promise<void>;
@@ -30,12 +31,14 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState<FirebaseUser | null>(null);
 
   /* Faz Login automatico */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       setUser(fbUser);
+      setInitializing(false);
     });
 
     return unsubscribe;
@@ -96,7 +99,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ register, loading, user, login, logout }}>
+    <AuthContext.Provider
+      value={{ register, loading, initializing, user, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

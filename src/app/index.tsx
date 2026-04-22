@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,12 +7,13 @@ import {
   Image,
   ImageSourcePropType,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
 import { colors } from "@/themes/colors";
 import { Link, router } from "expo-router";
-
+import { useAuth } from "@/context/auth.context";
 const { width, height } = Dimensions.get("window");
 
 type DataProps = {
@@ -45,6 +46,13 @@ const data: DataProps[] = [
 export default function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const insets = useSafeAreaInsets();
+  const { user, initializing } = useAuth();
+
+  useEffect(() => {
+    if (!initializing && user) {
+      router.replace("/(drawer)/(tabs)");
+    }
+  }, [initializing, user]);
 
   const { paginationOverlayTop, slideTopPadding } = useMemo(() => {
     const paginationTopSpacing = 12;
@@ -56,6 +64,14 @@ export default function Index() {
       slideTopPadding: top + barHeight + belowBarGap,
     };
   }, [insets.top]);
+
+  if (initializing) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" className="text-primary" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 relative">

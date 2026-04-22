@@ -3,7 +3,7 @@ import { InputPassword } from "@/components/InputPassword";
 import { Button } from "@/components/ui/button";
 import { Link, router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ActivityIndicator, Text, View } from "react-native";
 import { useForm } from "react-hook-form";
@@ -27,13 +27,17 @@ export function LoginForm() {
   const [remember, setRemember] = useState(false);
   const { login, loading, user} = useAuth();
 
+  
+/* Redireciona para a tela de home se o usuário estiver logado */
+  useEffect(() => {
+    if (user) {
+      router.replace("/(drawer)/(tabs)");
+    }
+  }, [user]);
 
   /* Faz Login */
   async function handleLogin(data: LoginParams) {
     await login(data);
-    if (user) {
-      router.replace("/(drawer)/(tabs)");
-    }
   }
 
   /* Toggle Remember */
