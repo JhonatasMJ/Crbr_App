@@ -1,16 +1,16 @@
 import { InputLabel } from "@/components/InputLabel";
 import { InputPassword } from "@/components/InputPassword";
 import { Button } from "@/components/ui/button";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LoginParams } from "@/types/loginParams";
 import { loginSchema } from "@/shared/schemas/loginSchema";
-
+import { useAuth } from "@/context/auth.context";
 
 export function LoginForm() {
   const {
@@ -24,11 +24,19 @@ export function LoginForm() {
     },
     resolver: yupResolver(loginSchema),
   });
-  function handleLogin(data: LoginParams) {
-    console.log(data);
-  }
   const [remember, setRemember] = useState(false);
+  const { login, loading, user} = useAuth();
 
+
+  /* Faz Login */
+  async function handleLogin(data: LoginParams) {
+    await login(data);
+    if (user) {
+      router.replace("/(tabs)/home");
+    }
+  }
+
+  /* Toggle Remember */
   function toggleRemember() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setRemember((prev) => !prev);
@@ -68,7 +76,7 @@ export function LoginForm() {
         </Link>
       </View>
       <Button className="bg-primary" size="xl" onPress={handleSubmit(handleLogin)} disabled={isSubmitting}>
-        <Text className="font-sans-bold text-lg">Entrar</Text>
+        {loading ? <ActivityIndicator size="small" className="text-black" /> : <Text className="font-sans-bold text-lg">Entrar</Text>}
       </Button>
       <View className="flex-row justify-center">
         <Text className="text-white font-sans">Não tem uma conta?</Text>

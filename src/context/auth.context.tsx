@@ -11,14 +11,17 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   User as FirebaseUser,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
 import { ref, set } from "firebase/database";
+import { LoginParams } from "@/types/loginParams";
 
 type AuthContextType = {
   register: (data: RegisterParams) => Promise<void>;
   loading: boolean;
   user: FirebaseUser | null;
+  login: (data: LoginParams) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -67,8 +70,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function login({email, password}: LoginParams) {
+    try {
+      setLoading(true);
+      await signInWithEmailAndPassword(auth, email, password) 
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ register, loading, user }}>
+    <AuthContext.Provider value={{ register, loading, user, login }}>
       {children}
     </AuthContext.Provider>
   );
