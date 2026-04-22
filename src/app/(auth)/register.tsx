@@ -1,10 +1,6 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from "react-native";
+import { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
 import { RegisterForm } from "@/components/Forms/RegisterForm";
@@ -14,10 +10,13 @@ import { useForm } from "react-hook-form";
 import type { RegisterParams } from "@/types/registerParams";
 import { registerFullSchema } from "@/shared/schemas/registerFullSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
-
+import { useAuth } from "@/context/auth.context";
+import { ActivityIndicator } from "react-native";
+import { router } from "expo-router";
 const steps = ["account", "contact", "password"] as const;
 
 export default function Register() {
+  const { register, loading, user } = useAuth();
   const [activeTab, setActiveTab] = useState<(typeof steps)[number]>("account");
 
   const {
@@ -47,7 +46,9 @@ export default function Register() {
 
   /* Função para ir para a próxima aba a partir da aba de conta */
   async function goNextFromAccount() {
-    const valid = await trigger(["name", "email", "cpf"], { shouldFocus: true });
+    const valid = await trigger(["name", "email", "cpf"], {
+      shouldFocus: true,
+    });
     if (valid) goToTab("contact");
   }
 
@@ -59,9 +60,23 @@ export default function Register() {
     if (valid) goToTab("password");
   }
 
+  /* Redireciona para a tela de login se o usuário estiver logado */
+  useEffect(() => {
+    if (user) {
+      router.replace("/(auth)/login");
+    }
+  }, [user]);
+
   /* Função para enviar o cadastro completo */
   async function submitAll(payload: RegisterParams) {
-    console.log("Cadastro completo:", payload);
+    await register(payload);
+  }
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" className="text-primary" />
+      </View>
+    );
   }
 
   return (
