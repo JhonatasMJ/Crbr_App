@@ -13,6 +13,8 @@ import {
 } from "@expo-google-fonts/titillium-web";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider } from "@/context/auth.context";
+import { InvestmentsProvider } from "@/context/investments.context";
+import "react-native-gesture-handler";
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -34,9 +36,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={NAV_THEME[colorScheme ?? "light"]}>
       <AuthProvider>
+        <InvestmentsProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }} />
         <PortalHost />
+        </InvestmentsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -32,7 +32,7 @@ export function LoginForm() {
   async function handleLogin(data: LoginParams) {
     await login(data);
     if (user) {
-      router.replace("/(tabs)/home");
+      router.replace("/(drawer)/(tabs)");
     }
   }
 
