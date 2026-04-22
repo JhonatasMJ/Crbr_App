@@ -1,5 +1,6 @@
 import type { Control } from "react-hook-form";
 import type { RegisterParams } from "@/types/registerParams";
+import { PhoneInputLabel } from "@/components/PhoneInputLabel";
 import { InputLabel } from "@/components/InputLabel";
 import { Button } from "@/components/ui/button";
 import { Link } from "expo-router";
@@ -16,12 +17,7 @@ export function ContactForm({
 }) {
   return (
     <View className="gap-12">
-      <InputLabel
-        control={control}
-        name="phone"
-        label="Telefone"
-        placeholder="Digite seu telefone"
-      />
+      <PhoneInputLabel control={control} name="phone" label="Telefone" />
       <InputLabel
         control={control}
         name="birthDate"
