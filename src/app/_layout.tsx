@@ -15,6 +15,8 @@ import { ActivityIndicator, View } from "react-native";
 import { AuthProvider } from "@/context/auth.context";
 import { InvestmentsProvider } from "@/context/investments.context";
 import "react-native-gesture-handler";
+import { SnackBarContextProvider } from "@/context/snackbar.context";
+import { SnackBar } from "@/components/SnackBar";
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -35,13 +37,16 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME[colorScheme ?? "light"]}>
-      <AuthProvider>
-        <InvestmentsProvider>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
-        <PortalHost />
-        </InvestmentsProvider>
-      </AuthProvider>
+      <SnackBarContextProvider>
+        <AuthProvider>
+          <InvestmentsProvider>
+            <StatusBar style="light" />
+            <Stack screenOptions={{ headerShown: false }} />
+            <SnackBar />
+            <PortalHost />
+          </InvestmentsProvider>
+        </AuthProvider>
+      </SnackBarContextProvider>
     </ThemeProvider>
   );
 }

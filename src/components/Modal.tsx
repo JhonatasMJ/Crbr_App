@@ -20,12 +20,16 @@ interface ModalProps {
   onConfirm?: () => void;
 }
 
-export function Modal({description, title, trigger, onCancel, onConfirm}: ModalProps) {
+export function Modal({
+  description,
+  title,
+  trigger,
+  onCancel,
+  onConfirm,
+}: ModalProps) {
   return (
     <Dialog>
-      <DialogTrigger>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -35,13 +39,20 @@ export function Modal({description, title, trigger, onCancel, onConfirm}: ModalP
         </DialogHeader>
         <DialogFooter className="w-full flex-row items-center gap-2">
           <DialogClose asChild>
-            <Button className="h-11 flex-1 bg-red-500 active:bg-red-600" onPress={onCancel}>
-              <Text className="text-center text-white font-sans-semibold">Cancelar</Text>
+            <Button
+              className="h-11 flex-1 bg-red-500 active:bg-red-600"
+              onPress={onCancel}
+            >
+              <Text className="text-center text-white font-sans-semibold">
+                Cancelar
+              </Text>
             </Button>
           </DialogClose>
           <DialogClose asChild>
             <Button className="h-11 flex-1 bg-primary" onPress={onConfirm}>
-              <Text className="text-center text-black font-sans-semibold">Confirmar</Text>
+              <Text className="text-center text-black font-sans-semibold">
+                Confirmar
+              </Text>
             </Button>
           </DialogClose>
         </DialogFooter>

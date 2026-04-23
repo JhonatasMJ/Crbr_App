@@ -5,7 +5,7 @@ import { Link, router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LoginParams } from "@/types/loginParams";
@@ -40,9 +40,7 @@ export function LoginForm() {
     try {
       await login(data);
       router.replace("/(drawer)/(tabs)");
-    } catch (error) {
-      Alert.alert("Falha no login", "Email ou senha invalidos.");
-    }
+    } catch {}
   }
 
   /* Toggle Remember */

@@ -17,6 +17,7 @@ import {
 import { auth, database } from "@/shared/services/firebase";
 import { ref, set } from "firebase/database";
 import { LoginParams } from "@/types/loginParams";
+import { useSnackBarContext } from "./snackbar.context";
 
 type AuthContextType = {
   register: (data: RegisterParams) => Promise<void>;
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const { notify } = useSnackBarContext();
 
   /* Faz Login automatico */
   useEffect(() => {
@@ -76,10 +78,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   async function login({ email, password }: LoginParams) {
     try {
       setLoading(true);
+  
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error(error);
-      throw error;
+  
+    } catch (error: any) {
+     /* Tratamento de erros do Firebase, NOTIFY É DA SNACKBAR */
+      if (error.code === "auth/invalid-credential") {
+        notify({
+          message: "Email ou senha inválidos",
+          messageType: "ERROR",
+        });
+      } else {
+        notify({
+          message: "Erro ao fazer login",
+          messageType: "ERROR",
+          });
+      }
+  
+      throw error; // mantém comportamento atual se precisar
     } finally {
       setLoading(false);
     }
