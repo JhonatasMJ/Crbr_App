@@ -6,12 +6,18 @@ import {
   DrawerItemList,
 } from "@react-navigation/drawer";
 import { useAuth } from "@/context/auth.context";
-import { Button } from "@/components/ui/button";
 import Line from "@/assets/whiteLine.svg";
 import { formatName } from "@/shared/utils/formatName";
+import { Modal } from "@/components/Modal";
+import { router } from "expo-router";
 
 export default function DrawerLayout() {
   const { user, logout } = useAuth();
+
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
 
   return (
     <Drawer
@@ -49,13 +55,19 @@ export default function DrawerLayout() {
 
           <View className="p-5">
             <Line width={250} height={20} />
-            <Button
-              onPress={() => logout()}
-              className="flex-row items-center justify-center gap-2 bg-transparent "
-            >
-              <LogOut color="#FFBF00" size={18} />
-              <Text className="text-white font-sans-semibold text-lg">Sair da conta</Text>
-            </Button>
+            <Modal
+              title="Sair da conta"
+              description="Tem certeza que deseja sair da conta?"
+              onConfirm={handleLogout}
+              trigger={
+                <View className="flex-row items-center justify-center gap-2">
+                  <LogOut color="#FFBF00" size={18} />
+                  <Text className="text-white font-sans-semibold text-lg">
+                    Sair da conta
+                  </Text>
+                </View>
+              }
+            />
           </View>
         </View>
       )}
