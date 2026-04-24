@@ -5,11 +5,12 @@ import { DrawerActions, useNavigation } from "@react-navigation/native";
 import Logo from "@/assets/logoSvg.svg";
 import Line from "@/assets/line.svg";
 import { Menu } from "lucide-react-native";
+import { useInvestments } from "@/context/investments.context";
 
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
-
+  const { investments } = useInvestments();
   function handleOpenDrawer() {
     const parentNavigation = navigation.getParent();
 
@@ -39,6 +40,10 @@ export function HomeHeader() {
       </View>
       <View className="mt-2">
         <Line />
+      </View>
+      <View className="mt-4">
+        <Text className="font-sans-semibold text-xl text-primary-foreground">Seu saldo</Text>
+        <Text className="font-sans-bold text-2xl text-primary-foreground">R$ {investments.reduce((acc, investment) => acc + Number(investment.amount), 0).toFixed(2)}</Text>
       </View>
     </View>
   );

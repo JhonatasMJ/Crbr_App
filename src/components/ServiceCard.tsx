@@ -1,25 +1,38 @@
 import { Icon } from "@/components/ui/icon";
-import { BanknoteIcon, CreditCardIcon, ShieldIcon } from "lucide-react-native";
+import { redirectWhatsapp } from "@/shared/utils/redirectWhatsapp";
+import { BanknoteIcon, CreditCardIcon, LucideIcon, ShieldIcon } from "lucide-react-native";
+import { ElementType } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-const serviceData = [
+type ServiceCardProps = {
+    id: number;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    redirectWhatsapp: string;
+}
+
+const serviceData: ServiceCardProps[] = [
     {
         id: 1,
         title: "Empréstimo",
         description: "Crédito rápido e fácil para suas necessicdades.",
         icon: BanknoteIcon,
+        redirectWhatsapp: "Olá, gostaria de saber mais sobre o empréstimo.",
     },
     {
         id: 2,
         title: "Seguro",
         description: "Crédito rápido e fácil para suas necessicdades..",
         icon: ShieldIcon,
+        redirectWhatsapp: "Olá, gostaria de saber mais sobre o seguro.",
     },
     {
         id: 3,
         title: "Consórcio",
         description: "Crédito rápido e fácil para suas necessicdades.",
         icon: CreditCardIcon,
+        redirectWhatsapp: "Olá, gostaria de saber mais sobre o consórcio.",
     },
 
 ];
@@ -34,7 +47,7 @@ export function ServiceCard() {
         >
             {serviceData.map((service) => {
                 return (
-                    <Pressable 
+                    <Pressable onPress={() => redirectWhatsapp({message: service.redirectWhatsapp})}
                         key={service.id}
                         className="w-[220] h-[160] shrink-0 rounded-md bg-primary p-4"
                     >

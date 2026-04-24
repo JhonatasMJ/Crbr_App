@@ -10,9 +10,11 @@ import Line from "@/assets/whiteLine.svg";
 import { formatName } from "@/shared/utils/formatName";
 import { Modal } from "@/components/Modal";
 import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function DrawerLayout() {
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
 
   async function handleLogout() {
     await logout();
@@ -53,7 +55,7 @@ export default function DrawerLayout() {
             </DrawerContentScrollView>
           </View>
 
-          <View className="p-5">
+          <View className="px-5 pt-2" style={{ paddingBottom: Math.max(insets.bottom, 16) }}>
             <Line width={250} height={20} />
             <Modal
               title="Sair da conta"
