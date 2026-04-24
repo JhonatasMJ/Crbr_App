@@ -10,7 +10,10 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["TitilliumRegular"],
+        // Titillium no pacote @expo-google-fonts não traz peso 500; 600 é o mais próximo de "medium"
+        "sans-medium": ["TitilliumSemiBold"],
         "sans-semibold": ["TitilliumSemiBold"],
+        "sans-regular": ["TitilliumRegular"],
         "sans-bold": ["TitilliumBold"],
       },
       colors: {
