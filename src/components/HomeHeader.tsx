@@ -1,20 +1,21 @@
 import { useAuth } from "@/context/auth.context";
 import { getFirstName } from "@/shared/utils/formatName";
-import { Text, View, Pressable, FlatList } from "react-native";
+import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
+import { Text, View, Pressable, FlatList, TextInput } from "react-native";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import Logo from "@/assets/logoSvg.svg";
 import Line from "@/assets/line.svg";
-import { Menu } from "lucide-react-native";
+import { Eye, EyeOff, Menu } from "lucide-react-native";
 import { useInvestments } from "@/context/investments.context";
 import { getHeaderStatisticItems } from "@/shared/utils/statisticData";
 import { StatisticCard } from "./StatisticCard";
+import { Button } from "./ui/button";
 
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { investments, balanceFormatted } = useInvestments();
+  const { investments, TotalBalance, handleToggleBalance, showData } = useInvestments();
   const firstInvestment = investments[0];
-
   function handleOpenDrawer() {
     const parentNavigation = navigation.getParent();
 
@@ -27,7 +28,7 @@ export function HomeHeader() {
   }
 
   return (
-    <View className="bg-primary  rounded-b-xl p-6 py-10">
+    <View className="bg-primary  rounded-b-xl p-6 py-10">1
       <View className="flex-row items-center justify-between">
         <Pressable onPress={handleOpenDrawer} className="p-2">
           <Menu size={24} color="#111" />
@@ -46,12 +47,35 @@ export function HomeHeader() {
         <Line />
       </View>
       <View className="mt-4">
-        <Text className="font-sans-semibold text-xl text-primary-foreground">
-          Seu saldo
-        </Text>
-        <Text className="font-sans-bold text-3xl text-primary-foreground">
-          {balanceFormatted}
-        </Text>
+        <View className="flex-row items-end justify-between">
+          <View>
+            <Text className="font-sans-semibold text-xl text-primary-foreground">
+              Seu saldo
+            </Text>
+            <TextInput
+              editable={false}
+              selectTextOnFocus={false}
+              secureTextEntry={!showData}
+              className="font-sans-bold text-3xl text-primary-foreground p-0 m-0"
+              style={{ includeFontPadding: false, textAlignVertical: "center" }}
+              value={formatInvestmentAmount(TotalBalance)}
+            />
+          </View>
+          <View>
+            <Button
+              size="icon"
+              className="bg-secondary"
+              onPress={handleToggleBalance}
+            >
+              {showData ? (
+                <EyeOff size={16} color="#fff" />
+              ) : (
+                <Eye size={16} color="#fff" />
+              )}
+            </Button>
+          </View>
+        </View>
+        <View />
         <Text className="mt-6 font-sans-bold text-lg text-primary-foreground">
           Estatísticas
         </Text>

@@ -11,16 +11,15 @@ import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue } from "firebase/database";
 import { auth, database } from "@/shared/services/firebase";
 import { calculateInvestmentIncome } from "@/shared/utils/calculateInvestmentIncome";
-import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { InvestmentsParams } from "@/types/investmentsParams";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
   allInvestments: number;
-  allInvestmentsFormatted: string;
-  balance: number;
-  balanceFormatted: string;
+  TotalBalance: number;
   loading: boolean;
+  handleToggleBalance: () => void;
+  showData: boolean;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -38,6 +37,7 @@ function parseAmount(value?: string | number): number {
 export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState<InvestmentsParams[]>([]);
+  const [showData, setShowData] = useState(true);
 
   const allInvestments = useMemo(() => {
     return investments.reduce((acc, investment) => {
@@ -48,7 +48,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
   const currentInvestment = investments[0];
 
-  const balance = useMemo(() => {
+  const TotalBalance = useMemo(() => {
     if (!currentInvestment) return 0;
 
     const amount = parseAmount(
@@ -63,16 +63,6 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
     return amount + income;
   }, [currentInvestment]);
-
-  const allInvestmentsFormatted = useMemo(
-    () => formatInvestmentAmount(allInvestments),
-    [allInvestments]
-  );
-
-  const balanceFormatted = useMemo(
-    () => formatInvestmentAmount(balance),
-    [balance]
-  );
 
   useEffect(() => {
     let unsubscribeDb: any = null;
@@ -129,15 +119,19 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  function handleToggleBalance() {
+    setShowData(!showData);
+  }
+
   return (
     <InvestmentsContext.Provider
       value={{
         investments,
         allInvestments,
-        allInvestmentsFormatted,
-        balance,
-        balanceFormatted,
+        TotalBalance,
         loading,
+        handleToggleBalance,
+        showData,
       }}
     >
       {children}

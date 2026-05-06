@@ -13,7 +13,7 @@ export function SnackBar() {
 
   return (
     <View
-      className={`bg-[#111] absolute bottom-10 self-center z-50 h-[50px] w-[90%] justify-center  p-2 border-l-4 ${borderColor}`}
+      className={`bg-[#111] absolute bottom-10 self-center z-50 h-[50px] w-[90%] justify-center p-2 border-l-4 animate-fade-in ${borderColor}`}
     >
       <Text className="text-white text-base font-bold text-center">{message}</Text>
     </View>
