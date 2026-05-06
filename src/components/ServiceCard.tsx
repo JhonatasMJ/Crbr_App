@@ -1,8 +1,7 @@
 import { Icon } from "@/components/ui/icon";
 import { redirectWhatsapp } from "@/shared/utils/redirectWhatsapp";
 import { BanknoteIcon, CreditCardIcon, LucideIcon, ShieldIcon } from "lucide-react-native";
-import { ElementType } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text,  } from "react-native";
 
 type ServiceCardProps = {
     id: number;

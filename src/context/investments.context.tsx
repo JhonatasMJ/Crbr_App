@@ -3,24 +3,76 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, onValue, get } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 import { auth, database } from "@/shared/services/firebase";
+import { calculateInvestmentIncome } from "@/shared/utils/calculateInvestmentIncome";
+import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { InvestmentsParams } from "@/types/investmentsParams";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
+  allInvestments: number;
+  allInvestmentsFormatted: string;
+  balance: number;
+  balanceFormatted: string;
   loading: boolean;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
 
+function parseAmount(value?: string | number): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+
+  const parsed = Number(
+    String(value ?? "0").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")
+  );
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState<InvestmentsParams[]>([]);
+
+  const allInvestments = useMemo(() => {
+    return investments.reduce((acc, investment) => {
+      const amount = parseAmount(investment.investmentAmount || investment.amount);
+      return acc + amount;
+    }, 0);
+  }, [investments]);
+
+  const currentInvestment = investments[0];
+
+  const balance = useMemo(() => {
+    if (!currentInvestment) return 0;
+
+    const amount = parseAmount(
+      currentInvestment.investmentAmount || currentInvestment.amount
+    );
+    const income = calculateInvestmentIncome({
+      amount,
+      startDate: currentInvestment.startDate,
+      endDate: currentInvestment.endDate,
+      duration: currentInvestment.duration,
+    });
+
+    return amount + income;
+  }, [currentInvestment]);
+
+  const allInvestmentsFormatted = useMemo(
+    () => formatInvestmentAmount(allInvestments),
+    [allInvestments]
+  );
+
+  const balanceFormatted = useMemo(
+    () => formatInvestmentAmount(balance),
+    [balance]
+  );
 
   useEffect(() => {
     let unsubscribeDb: any = null;
@@ -43,33 +95,26 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
         `users/${user.uid}/investments`
       );
 
-      unsubscribeDb = onValue(userInvestmentsRef, async (snapshot) => {
-        const ids = snapshot.val();
+      unsubscribeDb = onValue(userInvestmentsRef, (snapshot) => {
+        const rawInvestments = snapshot.val();
 
-        if (!ids) {
+        if (!rawInvestments) {
           setInvestments([]);
           setLoading(false);
           return;
         }
 
-        const keys = Object.keys(ids);
+        const results = Object.entries(rawInvestments)
+          .filter(
+            ([, value]) =>
+              Boolean(value) && typeof value === "object" && !Array.isArray(value)
+          )
+          .map(([id, value]) => ({
+            id,
+            ...(value as Omit<InvestmentsParams, "id">),
+          }));
 
-        try {
-          const promises = keys.map(async (id) => {
-            const snap = await get(ref(database, `investments/${id}`));
-
-            return {
-              id,
-              ...snap.val(),
-            };
-          });
-
-          const results: any = await Promise.all(promises);
-
-          setInvestments(results);
-        } catch (error) {
-          console.log("Erro ao buscar investimentos:", error);
-        }
+        setInvestments(results);
 
         setLoading(false);
       });
@@ -85,7 +130,16 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <InvestmentsContext.Provider value={{ investments, loading }}>
+    <InvestmentsContext.Provider
+      value={{
+        investments,
+        allInvestments,
+        allInvestmentsFormatted,
+        balance,
+        balanceFormatted,
+        loading,
+      }}
+    >
       {children}
     </InvestmentsContext.Provider>
   );
