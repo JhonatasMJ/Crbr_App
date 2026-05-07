@@ -2,8 +2,8 @@ import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { getInvestmentProgressInfo } from "@/shared/utils/calculateInvestmentIncome";
 import { Pressable, Text, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
-import clsx from "clsx";
 import { Progress } from "./ui/progress";
+import { INVESTMENT_CARD_STYLE, InvestmentCardVariant } from "@/shared/strategies/investment-card";
 
 type InvestmentCardProps = {
   selected?: boolean;
@@ -31,6 +31,8 @@ export function InvestmentCard({
   duration,
 }: InvestmentCardProps) {
   const progress = getInvestmentProgressInfo({ startDate, endDate, duration });
+  const variant: InvestmentCardVariant = selected ? "selected" : "default";
+  const style = INVESTMENT_CARD_STYLE[variant];
 
   return (
     <Swipeable
@@ -43,53 +45,28 @@ export function InvestmentCard({
       overshootRight={false}
     >
       <Pressable onPress={onPress}>
-        <View
-          className={clsx(
-            "rounded-md p-4",
-            selected ? "bg-primary" : "bg-secondary",
-          )}
-        >
-          <Text
-            className={clsx(
-              "font-sans-semibold text-lg",
-              selected ? "text-secondary" : "text-white",
-            )}
-          >
+        <View className={`rounded-md p-4 ${style.containerBg}`}>
+          <Text className={`font-sans-semibold text-lg ${style.titleText}`}>
             {name}
           </Text>
-          <Text
-            className={clsx(
-              "font-sans-bold text-2xl",
-              selected ? "text-secondary" : "text-white",
-            )}
-          >
+          <Text className={`font-sans-bold text-2xl ${style.amountText}`}>
             {formatInvestmentAmount(amount)}
           </Text>
 
           {progress ? (
             <View className="mt-3">
               <View className="mb-2 flex-row items-center justify-between">
-                <Text
-                  className={clsx(
-                    "font-sans-medium text-sm",
-                    selected ? "text-secondary/80" : "text-white/80",
-                  )}
-                >
+                <Text className={`font-sans-medium text-sm ${style.helperText}`}>
                   Dias Restantes
                 </Text>
-                <Text
-                  className={clsx(
-                    "font-sans-semibold text-sm",
-                    selected ? "text-secondary" : "text-white",
-                  )}
-                >
+                <Text className={`font-sans-semibold text-sm ${style.remainingText}`}>
                   {remainingLabel(progress.daysRemaining)}
                 </Text>
               </View>
               <Progress
                 value={progress.progressPercent}
-                indicatorClassName={selected ? "bg-secondary" : "bg-primary"}
-                className={selected ? "bg-secondary/25" : "bg-primary/25"}
+                indicatorClassName={style.progressIndicator}
+                className={style.progressTrack}
               />
             </View>
           ) : null}
