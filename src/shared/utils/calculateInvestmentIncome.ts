@@ -1,3 +1,5 @@
+import type { InvestmentsParams } from "@/types/investmentsParams";
+
 const TOTAL_INCOME_RATE = 0.1;
 
 type CalculateInvestmentIncomeParams = {
@@ -9,12 +11,40 @@ type CalculateInvestmentIncomeParams = {
 };
 
 function parseAmount(value?: string | number): number {
-  const rawAmount = String(value ?? "0");
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+
   const parsedAmount = Number(
-    rawAmount.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")
+    String(value ?? "0").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")
   );
 
   return Number.isFinite(parsedAmount) ? parsedAmount : 0;
+}
+
+/** Valor aplicado (principal) de um investimento. */
+export function getInvestmentPrincipal(investment: InvestmentsParams): number {
+  return parseAmount(investment.investmentAmount || investment.amount);
+}
+
+/** Principal + renda proporcional até hoje (mesma regra do header). */
+export function getInvestmentBalance(investment: InvestmentsParams): number {
+  const principal = getInvestmentPrincipal(investment);
+  return (
+    principal +
+    calculateInvestmentIncome({
+      amount: principal,
+      startDate: investment.startDate,
+      endDate: investment.endDate,
+      duration: investment.duration,
+    })
+  );
+}
+
+export function investmentToCardItem(investment: InvestmentsParams) {
+  return {
+    id: investment.id,
+    name: investment.investmentName || investment.name,
+    amount: getInvestmentBalance(investment),
+  };
 }
 
 function parseDate(value?: string): Date | null {
@@ -60,6 +90,58 @@ function addMonths(date: Date, months: number): Date {
   return result;
 }
 
+/** Mesmo intervalo usado no rendimento: início → fim (duration ou endDate). */
+function resolveInvestmentPeriod(
+  startDate?: string,
+  endDate?: string,
+  duration?: string
+): { start: Date; end: Date } | null {
+  const start = parseDate(startDate);
+  const parsedEndDate = parseDate(endDate);
+  const durationMonths = getDurationMonths(duration);
+  const end =
+    start && durationMonths ? addMonths(start, durationMonths) : parsedEndDate;
+
+  if (!start || !end) return null;
+  const totalMs = end.getTime() - start.getTime();
+  if (totalMs <= 0) return null;
+
+  return { start, end };
+}
+
+export type InvestmentProgressInfo = {
+  /** 0–100, tempo decorrido no período. */
+  progressPercent: number;
+  /** Dias até o vencimento (0 se já passou). */
+  daysRemaining: number;
+};
+
+export function getInvestmentProgressInfo(
+  params: Pick<InvestmentsParams, "startDate" | "endDate" | "duration">,
+  today = new Date()
+): InvestmentProgressInfo | null {
+  const period = resolveInvestmentPeriod(
+    params.startDate,
+    params.endDate,
+    params.duration
+  );
+  if (!period) return null;
+
+  const { start, end } = period;
+  const totalMs = end.getTime() - start.getTime();
+  const t = today.getTime();
+
+  const progressRatio = Math.min(Math.max((t - start.getTime()) / totalMs, 0), 1);
+  const remainingMs = end.getTime() - t;
+  const daysRemaining =
+    remainingMs <= 0 ? 0 : Math.ceil(remainingMs / 86_400_000);
+
+  return {
+    progressPercent: Math.round(progressRatio * 100),
+    daysRemaining,
+  };
+}
+
 export function calculateInvestmentIncome({
   amount,
   startDate,
@@ -68,18 +150,13 @@ export function calculateInvestmentIncome({
   today = new Date(),
 }: CalculateInvestmentIncomeParams): number {
   const parsedAmount = parseAmount(amount);
-  const start = parseDate(startDate);
-  const parsedEndDate = parseDate(endDate);
-  const durationMonths = getDurationMonths(duration);
-  const end =
-    start && durationMonths ? addMonths(start, durationMonths) : parsedEndDate;
+  const period = resolveInvestmentPeriod(startDate, endDate, duration);
 
-  if (!parsedAmount || !start || !end) return 0;
+  if (!parsedAmount || !period) return 0;
 
+  const { start, end } = period;
   const totalIncome = parsedAmount * TOTAL_INCOME_RATE;
   const totalDurationMs = end.getTime() - start.getTime();
-
-  if (totalDurationMs <= 0) return 0;
 
   const elapsedMs = Math.min(
     Math.max(today.getTime() - start.getTime(), 0),

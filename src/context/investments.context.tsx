@@ -10,7 +10,10 @@ import {
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, onValue } from "firebase/database";
 import { auth, database } from "@/shared/services/firebase";
-import { calculateInvestmentIncome } from "@/shared/utils/calculateInvestmentIncome";
+import {
+  getInvestmentBalance,
+  getInvestmentPrincipal,
+} from "@/shared/utils/calculateInvestmentIncome";
 import { InvestmentsParams } from "@/types/investmentsParams";
 
 type InvestmentsContextType = {
@@ -24,44 +27,19 @@ type InvestmentsContextType = {
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
 
-function parseAmount(value?: string | number): number {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-
-  const parsed = Number(
-    String(value ?? "0").replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")
-  );
-
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState<InvestmentsParams[]>([]);
   const [showData, setShowData] = useState(true);
 
   const allInvestments = useMemo(() => {
-    return investments.reduce((acc, investment) => {
-      const amount = parseAmount(investment.investmentAmount || investment.amount);
-      return acc + amount;
-    }, 0);
+    return investments.reduce((acc, investment) => acc + getInvestmentPrincipal(investment), 0);
   }, [investments]);
 
   const currentInvestment = investments[0];
 
   const TotalBalance = useMemo(() => {
-    if (!currentInvestment) return 0;
-
-    const amount = parseAmount(
-      currentInvestment.investmentAmount || currentInvestment.amount
-    );
-    const income = calculateInvestmentIncome({
-      amount,
-      startDate: currentInvestment.startDate,
-      endDate: currentInvestment.endDate,
-      duration: currentInvestment.duration,
-    });
-
-    return amount + income;
+    return currentInvestment ? getInvestmentBalance(currentInvestment) : 0;
   }, [currentInvestment]);
 
   useEffect(() => {
