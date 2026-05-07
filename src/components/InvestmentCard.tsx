@@ -1,10 +1,13 @@
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { getInvestmentProgressInfo } from "@/shared/utils/calculateInvestmentIncome";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import clsx from "clsx";
 import { Progress } from "./ui/progress";
 
 type InvestmentCardProps = {
+  selected?: boolean;
+  onPress?: () => void;
   name: string;
   amount: number;
   startDate: string;
@@ -19,6 +22,8 @@ function remainingLabel(days: number): string {
 }
 
 export function InvestmentCard({
+  selected = false,
+  onPress,
   name,
   amount,
   startDate,
@@ -37,26 +42,59 @@ export function InvestmentCard({
       }}
       overshootRight={false}
     >
-      <View className="w-full rounded-md bg-primary p-4">
-        <Text className="font-sans-semibold text-lg text-secondary">{name}</Text>
-        <Text className="font-sans-bold text-2xl text-secondary">
-          {formatInvestmentAmount(amount)}
-        </Text>
+      <Pressable onPress={onPress}>
+        <View
+          className={clsx(
+            "rounded-md p-4",
+            selected ? "bg-primary" : "bg-secondary",
+          )}
+        >
+          <Text
+            className={clsx(
+              "font-sans-semibold text-lg",
+              selected ? "text-secondary" : "text-white",
+            )}
+          >
+            {name}
+          </Text>
+          <Text
+            className={clsx(
+              "font-sans-bold text-2xl",
+              selected ? "text-secondary" : "text-white",
+            )}
+          >
+            {formatInvestmentAmount(amount)}
+          </Text>
 
-        {progress ? (
-          <View className="mt-3">
-            <View className="mb-2 flex-row items-center justify-between">
-              <Text className="font-sans-medium text-sm text-secondary/80">
-                Dias Restantes
-              </Text>
-              <Text className="font-sans-semibold text-sm text-secondary">
-                {remainingLabel(progress.daysRemaining)}
-              </Text>
+          {progress ? (
+            <View className="mt-3">
+              <View className="mb-2 flex-row items-center justify-between">
+                <Text
+                  className={clsx(
+                    "font-sans-medium text-sm",
+                    selected ? "text-secondary/80" : "text-white/80",
+                  )}
+                >
+                  Dias Restantes
+                </Text>
+                <Text
+                  className={clsx(
+                    "font-sans-semibold text-sm",
+                    selected ? "text-secondary" : "text-white",
+                  )}
+                >
+                  {remainingLabel(progress.daysRemaining)}
+                </Text>
+              </View>
+              <Progress
+                value={progress.progressPercent}
+                indicatorClassName={selected ? "bg-secondary" : "bg-primary"}
+                className={selected ? "bg-secondary/25" : "bg-primary/25"}
+              />
             </View>
-              <Progress value={progress.progressPercent} />
-          </View>
-        ) : null}
-      </View>
+          ) : null}
+        </View>
+      </Pressable>
     </Swipeable>
   );
 }

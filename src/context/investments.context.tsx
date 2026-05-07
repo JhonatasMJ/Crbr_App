@@ -18,6 +18,9 @@ import { InvestmentsParams } from "@/types/investmentsParams";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
+  /** Investimento exibido no header (selecionado ou o primeiro). */
+  selectedInvestment: InvestmentsParams | undefined;
+  selectInvestment: (id: string | undefined) => void;
   allInvestments: number;
   TotalBalance: number;
   loading: boolean;
@@ -30,17 +33,41 @@ const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
 export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState<InvestmentsParams[]>([]);
+  const [selectedInvestmentId, setSelectedInvestmentId] = useState<
+    string | undefined
+  >(undefined);
   const [showData, setShowData] = useState(true);
+
+  const selectedInvestment = useMemo(() => {
+    if (!investments.length) return undefined;
+    if (selectedInvestmentId) {
+      const found = investments.find((i) => i.id === selectedInvestmentId);
+      if (found) return found;
+    }
+    return investments[0];
+  }, [investments, selectedInvestmentId]);
+
+  useEffect(() => {
+    if (!investments.length) {
+      setSelectedInvestmentId(undefined);
+      return;
+    }
+    setSelectedInvestmentId((prev) =>
+      prev && investments.some((i) => i.id === prev) ? prev : investments[0]?.id
+    );
+  }, [investments]);
 
   const allInvestments = useMemo(() => {
     return investments.reduce((acc, investment) => acc + getInvestmentPrincipal(investment), 0);
   }, [investments]);
 
-  const currentInvestment = investments[0];
-
   const TotalBalance = useMemo(() => {
-    return currentInvestment ? getInvestmentBalance(currentInvestment) : 0;
-  }, [currentInvestment]);
+    return selectedInvestment ? getInvestmentBalance(selectedInvestment) : 0;
+  }, [selectedInvestment]);
+
+  function selectInvestment(id: string | undefined) {
+    setSelectedInvestmentId(id);
+  }
 
   useEffect(() => {
     let unsubscribeDb: any = null;
@@ -105,6 +132,8 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     <InvestmentsContext.Provider
       value={{
         investments,
+        selectedInvestment,
+        selectInvestment,
         allInvestments,
         TotalBalance,
         loading,

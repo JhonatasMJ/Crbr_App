@@ -14,8 +14,8 @@ import { Button } from "./ui/button";
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { investments, TotalBalance, handleToggleBalance, showData } = useInvestments();
-  const firstInvestment = investments[0];
+  const { selectedInvestment, TotalBalance, handleToggleBalance, showData } =
+    useInvestments();
   function handleOpenDrawer() {
     const parentNavigation = navigation.getParent();
 
@@ -80,7 +80,7 @@ export function HomeHeader() {
           Estatísticas
         </Text>
         <FlatList
-          data={getHeaderStatisticItems(firstInvestment)}
+          data={getHeaderStatisticItems(selectedInvestment)}
           keyExtractor={(item) => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}

@@ -1,5 +1,4 @@
-import { Text, View } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList, Text, View } from "react-native";
 import { HomeHeader } from "@/components/HomeHeader";
 import { ServiceCard } from "@/components/ServiceCard";
 import { InvestmentCard } from "@/components/InvestmentCard";
@@ -37,26 +36,32 @@ function InvestmentRowSeparator() {
 }
 
 export default function Home() {
-  const { investments } = useInvestments();
+  const { investments, selectedInvestment, selectInvestment } = useInvestments();
 
   return (
     <FlatList
       className="flex-1 bg-background"
       data={investments}
-      keyExtractor={(item, index) => item.id ?? `${item.userId}-${index}`}
-      ListHeaderComponent={HomeListHeader}
+      keyExtractor={(item) => item.id ?? ""}
+      ListHeaderComponent={<HomeListHeader />}
       renderItem={({ item }) => {
         const card = investmentToCardItem(item);
-          return (
-            <InvestmentCard name={card.name} amount={card.amount} startDate={item.startDate} endDate={item.endDate} duration={item.duration} />
-  
+        return (
+          <InvestmentCard
+            selected={selectedInvestment?.id === item.id}
+            onPress={() => selectInvestment(item.id)}
+            name={card.name}
+            amount={card.amount}
+            startDate={item.startDate}
+            endDate={item.endDate}
+            duration={item.duration}
+          />
         );
       }}
       ItemSeparatorComponent={InvestmentRowSeparator}
       ListFooterComponent={<View className="h-8" />}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      removeClippedSubviews
     />
   );
 }
