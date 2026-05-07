@@ -1,4 +1,5 @@
 export type HeaderProps = {
-  span: string;
+  span?: string;
   title: string;
+  logo?: boolean;
 }

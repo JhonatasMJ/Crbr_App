@@ -8,7 +8,7 @@ import { ErrorMessage } from "./ErrorMessage";
 
 export type InputLabelProps<TFieldValues extends FieldValues> = {
   label: string;
-  control: Control<TFieldValues>;
+  control?: Control<TFieldValues>;
   name: Path<TFieldValues>;
 } & ComponentProps<typeof Input>;
 
