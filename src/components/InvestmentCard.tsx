@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Progress } from "./ui/progress";
 import { INVESTMENT_CARD_STYLE, InvestmentCardVariant } from "@/shared/strategies/investment-card";
+import { RightAction } from "./RightAction";
 
 type InvestmentCardProps = {
   selected?: boolean;
@@ -40,11 +41,11 @@ export function InvestmentCard({
         overflow: "visible",
         width: "100%",
         marginTop: 16,
-        paddingHorizontal: 20,
       }}
       overshootRight={false}
+      renderRightActions={() => <RightAction />}
     >
-      <Pressable onPress={onPress}>
+      <Pressable onPress={onPress} className="px-4">
         <View className={`rounded-md p-4 ${style.containerBg}`}>
           <Text className={`font-sans-semibold text-lg ${style.titleText}`}>
             {name}
