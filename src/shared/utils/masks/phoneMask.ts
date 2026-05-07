@@ -1,5 +1,5 @@
 import type { PhoneCountry } from "@/shared/utils/phoneCountries";
-import { maskPhone as maskBrazilNational } from "@/shared/utils/cpfMask";
+import { maskPhone as maskBrazilNational } from "@/shared/utils/masks/cpfMask";
 
 /** Formata apenas os dígitos do número nacional (sem DDI), por país. */
 export function maskPhoneNational(country: PhoneCountry, value: string): string {

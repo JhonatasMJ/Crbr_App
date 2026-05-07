@@ -42,7 +42,7 @@ export function ServiceCard() {
             horizontal
             showsHorizontalScrollIndicator={false}
             className="mt-4 max-h-52 flex-grow-0"
-            contentContainerClassName="gap-4 px-4 pb-1"
+            contentContainerClassName="gap-4 px-6 pb-1"
         >
             {serviceData.map((service) => {
                 return (

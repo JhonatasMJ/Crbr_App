@@ -28,7 +28,7 @@ export function HomeHeader() {
   }
 
   return (
-    <View className="bg-primary  rounded-b-xl p-6 py-10">1
+    <View className="bg-primary  rounded-b-xl p-6 py-10">
       <View className="flex-row items-center justify-between">
         <Pressable onPress={handleOpenDrawer} className="p-2">
           <Menu size={24} color="#111" />

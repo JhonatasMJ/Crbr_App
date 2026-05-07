@@ -10,7 +10,7 @@ import {
   parseStoredPhone,
   type PhoneCountry,
 } from "@/shared/utils/phoneCountries";
-import { maskPhoneNational } from "@/shared/utils/phoneMask";
+import { maskPhoneNational } from "@/shared/utils/masks/phoneMask";
 import { ChevronDown } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import type { Control, FieldValues, Path } from "react-hook-form";

@@ -3,7 +3,7 @@ import type { RegisterParams } from "@/types/registerParams";
 import { Button } from "../ui/button";
 import { Text, View } from "react-native";
 import { InputLabel } from "../InputLabel";
-import { maskCPF } from "@/shared/utils/cpfMask";
+import { maskCPF } from "@/shared/utils/masks/cpfMask";
 
 export function RegisterForm({
   control,

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "expo-router";
 import { View } from "react-native";
 import { Text } from "../ui/text";
-import { maskDate } from "@/shared/utils/dateMask";
+import { maskDate } from "@/shared/utils/masks/dateMask";
 
 export function ContactForm({
   control,
