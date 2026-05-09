@@ -47,7 +47,12 @@ export default function Payments() {
           <Text className="text-primary font-sans-semibold text-xl">
             Chave Pix (Cnpj)
           </Text>
-          <Input value={pixKey} editable={false} selectTextOnFocus={false} />
+          <Input
+            className="text-white"
+            value={pixKey}
+            editable={false}
+            selectTextOnFocus={false}
+          />
           <Button
             className="absolute right-0 bottom-4"
             onPress={handleCopyPixKey}
@@ -61,7 +66,12 @@ export default function Payments() {
           <Text className="text-primary font-sans-semibold text-xl">
             Chave Aleatória
           </Text> 
-          <Input value={displayedRandomKey} editable={false} selectTextOnFocus={false} />
+          <Input
+            className="text-white"
+            value={displayedRandomKey}
+            editable={false}
+            selectTextOnFocus={false}
+          />
           <Button
             className="absolute right-0 bottom-4"
             onPress={handleCopyRandomPixKey}

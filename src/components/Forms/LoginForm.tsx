@@ -27,7 +27,6 @@ export function LoginForm() {
   const [remember, setRemember] = useState(false);
   const { login, loading, user } = useAuth();
 
-  
   /* Redireciona para a tela de home se o usuário estiver logado */
   useEffect(() => {
     if (user) {

@@ -13,11 +13,13 @@ import {
   User as FirebaseUser,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
 import { ref, set } from "firebase/database";
 import { LoginParams } from "@/types/loginParams";
 import { useSnackBarContext } from "./snackbar.context";
+import { UpdateUserParams } from "@/types/updateUserParams";
 
 type AuthContextType = {
   register: (data: RegisterParams) => Promise<void>;
@@ -26,6 +28,7 @@ type AuthContextType = {
   user: FirebaseUser | null;
   login: (data: LoginParams) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (data: UpdateUserParams) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -101,6 +104,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function updateUser(data: UpdateUserParams) {
+    try {
+      setLoading(true);
+      if (!user) throw new Error("Usuário não encontrado");
+      await updateProfile(user, {
+        displayName: data.name,
+      });
+      await set(ref(database, `users/${user.uid}`), {
+        ...user,
+        ...data,
+      });
+    } catch (error) {
+      console.error(error);
+      throw error; 
+    } finally {
+      setLoading(false);
+    }
+  }
   /* Faz Logout */
   async function logout() {
     try {
@@ -116,7 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ register, loading, initializing, user, login, logout }}
+      value={{ register, loading, initializing, user, login, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>
