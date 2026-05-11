@@ -2,7 +2,7 @@ import * as yup from "yup";
 import { isCompletePhone } from "@/shared/utils/phoneCountries";
 
 export const registerContactSchema = yup.object ({
-    phone: yup
+    phoneNumber: yup
       .string()
       .required("Telefone é obrigatório")
       .test(

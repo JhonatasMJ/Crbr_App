@@ -21,7 +21,10 @@ function Input({
 }: InputProps) {
   const [internalValue, setInternalValue] = useState("");
 
-  const value = propValue ?? internalValue;
+  const base = propValue ?? internalValue ?? "";
+  const value = maskFunction
+    ? maskFunction(base.replace(/\D/g, ""))
+    : base;
 
   function handleChange(text: string) {
     if (maskFunction) {

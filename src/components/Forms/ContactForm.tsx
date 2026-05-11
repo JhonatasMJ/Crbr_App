@@ -17,7 +17,7 @@ export function ContactForm({
 }) {
   return (
     <View className="gap-12">
-      <PhoneInputLabel control={control} name="phone" label="Telefone" />
+      <PhoneInputLabel control={control} name="phoneNumber" label="Telefone" />
       <InputLabel
         control={control}
         name="birthDate"

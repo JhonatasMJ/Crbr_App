@@ -16,19 +16,20 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
-import { ref, set } from "firebase/database";
+import { get, ref, set } from "firebase/database";
 import { LoginParams } from "@/types/loginParams";
 import { useSnackBarContext } from "./snackbar.context";
-import { UpdateUserParams } from "@/types/updateUserParams";
+import type { UserProfile, UserUpdatePayload } from "@/types/user";
 
 type AuthContextType = {
   register: (data: RegisterParams) => Promise<void>;
   loading: boolean;
   initializing: boolean;
   user: FirebaseUser | null;
+  userProfile: UserProfile | null;
   login: (data: LoginParams) => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (data: UpdateUserParams) => Promise<void>;
+  updateUser: (data: UserUpdatePayload) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -37,13 +38,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { notify } = useSnackBarContext();
 
   /* Faz Login automatico */
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setUser(fbUser);
-      setInitializing(false);
+      if (!fbUser) {
+        setUserProfile(null);
+        setInitializing(false);
+        return;
+      }
+      try {
+        const snap = await get(ref(database, `users/${fbUser.uid}`));
+        setUserProfile(
+          snap.exists() ? (snap.val() as UserProfile) : null,
+        );
+      } catch (e) {
+        console.error(e);
+        setUserProfile(null);
+      } finally {
+        setInitializing(false);
+      }
     });
 
     return unsubscribe;
@@ -65,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         name: data.name,
         email: data.email,
         cpf: data.cpf,
-        phone: data.phone,
+        phoneNumber: data.phoneNumber,
         birthDate: data.birthDate,
         city: data.city,
         createdAt: new Date().toISOString(),
@@ -98,13 +115,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
       }
   
-      throw error; // mantém comportamento atual se precisar
+      throw error; 
     } finally {
       setLoading(false);
     }
   }
 
-  async function updateUser(data: UpdateUserParams) {
+  async function updateUser(data: UserUpdatePayload) {
     try {
       setLoading(true);
       if (!user) throw new Error("Usuário não encontrado");
@@ -112,9 +129,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         displayName: data.name,
       });
       await set(ref(database, `users/${user.uid}`), {
-        ...user,
+        ...userProfile,
         ...data,
+        email: user.email ?? userProfile?.email,
       });
+      setUserProfile((prev) => ({
+        ...prev,
+        ...data,
+        email: user.email ?? prev?.email,
+      }));
     } catch (error) {
       console.error(error);
       throw error; 
@@ -137,7 +160,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ register, loading, initializing, user, login, logout, updateUser }}
+      value={{
+        register,
+        loading,
+        initializing,
+        user,
+        userProfile,
+        login,
+        logout,
+        updateUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

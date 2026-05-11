@@ -29,7 +29,7 @@ export default function Register() {
       name: "",
       email: "",
       cpf: "",
-      phone: "",
+      phoneNumber: "",
       birthDate: "",
       city: "",
       password: "",
@@ -54,7 +54,7 @@ export default function Register() {
 
   /* Função para ir para a próxima aba a partir da aba de contato */
   async function goNextFromContact() {
-    const valid = await trigger(["phone", "birthDate", "city"], {
+    const valid = await trigger(["phoneNumber", "birthDate", "city"], {
       shouldFocus: true,
     });
     if (valid) goToTab("password");

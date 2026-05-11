@@ -1,10 +1,9 @@
-export type RegisterParams = {
-  name: string;
-  email: string;
-  cpf: string;
-  phone: string;
-  birthDate: string;
-  city: string;
+import type { User } from "./user";
+
+export type RegisterParams = Pick<
+  User,
+  "name" | "email" | "cpf" | "phoneNumber" | "birthDate" | "city"
+> & {
   password: string;
   confirmPassword: string;
 };
