@@ -16,6 +16,7 @@ export function LoginForm() {
   const {
     control,
     handleSubmit,
+    reset,
     formState: { isSubmitting },
   } = useForm<LoginParams>({
     defaultValues: {
@@ -25,27 +26,50 @@ export function LoginForm() {
     resolver: yupResolver(loginSchema),
   });
   const [remember, setRemember] = useState(false);
-  const { login, loading, user } = useAuth();
+  const {
+    loginWithRemember,
+    getRememberedLogin,
+    clearRememberedLogin,
+    loading,
+    user,
+  } = useAuth();
 
-  /* Redireciona para a tela de home se o usuário estiver logado */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const saved = await getRememberedLogin();
+        if (cancelled || !saved) return;
+        reset({ email: saved.email, password: saved.password });
+        setRemember(true);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [reset, getRememberedLogin]);
+
   useEffect(() => {
     if (user) {
       router.replace("/(drawer)/(tabs)");
     }
   }, [user]);
 
-  /* Faz Login */
   async function handleLogin(data: LoginParams) {
     try {
-      await login(data);
+      await loginWithRemember(data, remember);
       router.replace("/(drawer)/(tabs)");
     } catch {}
   }
 
-  /* Toggle Remember */
-  function toggleRemember() {
+  function handleRememberChange(next: boolean) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    setRemember((prev) => !prev);
+    setRemember(next);
+    if (!next) {
+      void clearRememberedLogin();
+    }
   }
 
   return (
@@ -66,7 +90,7 @@ export function LoginForm() {
         <View className="flex-row items-center gap-3">
           <Checkbox
             checked={remember}
-            onCheckedChange={toggleRemember}
+            onCheckedChange={(v) => handleRememberChange(!!v)}
             checkedClassName="bg-primary"
             iconClassName="text-secondary"
           />

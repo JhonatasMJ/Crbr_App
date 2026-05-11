@@ -45,14 +45,38 @@ const data: DataProps[] = [
 
 export default function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [welcomeReady, setWelcomeReady] = useState(false);
   const insets = useSafeAreaInsets();
-  const { user, initializing } = useAuth();
+  const { user, initializing, getRememberedLogin } = useAuth();
 
   useEffect(() => {
-    if (!initializing && user) {
+    if (initializing) return;
+
+    if (user) {
       router.replace("/(drawer)/(tabs)");
+      return;
     }
-  }, [initializing, user]);
+
+    setWelcomeReady(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const remembered = await getRememberedLogin();
+        if (cancelled) return;
+        if (remembered) {
+          router.replace("/(auth)/login");
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      if (!cancelled) setWelcomeReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initializing, user, getRememberedLogin]);
 
   const { paginationOverlayTop, slideTopPadding } = useMemo(() => {
     const paginationTopSpacing = 12;
@@ -65,7 +89,7 @@ export default function Index() {
     };
   }, [insets.top]);
 
-  if (initializing) {
+  if (initializing || user || !welcomeReady) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" className="text-primary" />

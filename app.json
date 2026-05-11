@@ -62,7 +62,8 @@
           "faceIDPermission": "Permitir autenticação por Face ID"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

@@ -18,9 +18,54 @@ import {
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
 import { get, ref, set } from "firebase/database";
+import * as SecureStore from "expo-secure-store";
 import { LoginParams } from "@/types/loginParams";
 import { useSnackBarContext } from "./snackbar.context";
 import type { UserProfile, UserUpdatePayload } from "@/types/user";
+
+const REMEMBERED_LOGIN_SECURE_KEY = "crbr_remembered_login";
+
+export type RememberedLogin = {
+  email: string;
+  password: string;
+};
+
+async function clearRememberedLogin(): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(REMEMBERED_LOGIN_SECURE_KEY);
+  } catch {
+    /* item pode não existir */
+  }
+}
+
+async function getRememberedLogin(): Promise<RememberedLogin | null> {
+  try {
+    const raw = await SecureStore.getItemAsync(REMEMBERED_LOGIN_SECURE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<RememberedLogin>;
+      if (
+        typeof parsed.email === "string" &&
+        typeof parsed.password === "string"
+      ) {
+        return { email: parsed.email, password: parsed.password };
+      }
+    }
+  } catch {
+    /* JSON inválido ou SecureStore indisponível */
+  }
+  return null;
+}
+
+async function persistRememberedLogin(data: LoginParams): Promise<void> {
+  const payload: RememberedLogin = {
+    email: data.email.trim(),
+    password: data.password,
+  };
+  await SecureStore.setItemAsync(
+    REMEMBERED_LOGIN_SECURE_KEY,
+    JSON.stringify(payload),
+  );
+}
 
 type AuthContextType = {
   register: (data: RegisterParams) => Promise<void>;
@@ -29,6 +74,9 @@ type AuthContextType = {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   login: (data: LoginParams) => Promise<void>;
+  loginWithRemember: (data: LoginParams, remember: boolean) => Promise<void>;
+  getRememberedLogin: () => Promise<RememberedLogin | null>;
+  clearRememberedLogin: () => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: UserUpdatePayload) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -123,6 +171,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function loginWithRemember(data: LoginParams, remember: boolean) {
+    await login(data);
+    if (remember) {
+      await persistRememberedLogin(data);
+    } else {
+      await clearRememberedLogin();
+    }
+  }
+
   async function updateUser(data: UserUpdatePayload) {
     try {
       setLoading(true);
@@ -176,6 +233,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+
   return (
     <AuthContext.Provider
       value={{
@@ -185,6 +243,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         userProfile,
         login,
+        loginWithRemember,
+        getRememberedLogin,
+        clearRememberedLogin,
         logout,
         updateUser,
         resetPassword,
