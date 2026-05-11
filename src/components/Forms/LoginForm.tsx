@@ -75,7 +75,7 @@ export function LoginForm() {
           </Text>
         </View>
         <Link
-          href="/(auth)/register"
+          href="/(auth)/resetPassword"
           className="text-primary font-sans-semibold underline ml-2"
         >
           Esqueci a senha

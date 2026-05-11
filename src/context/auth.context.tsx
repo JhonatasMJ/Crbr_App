@@ -14,6 +14,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
 import { get, ref, set } from "firebase/database";
@@ -30,6 +31,7 @@ type AuthContextType = {
   login: (data: LoginParams) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: UserUpdatePayload) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -158,6 +160,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function resetPassword(email: string) {
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, email);
+      notify({
+        message: `Link enviado com sucesso`,
+        messageType: "SUCCESS",
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -169,6 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         updateUser,
+        resetPassword,
       }}
     >
       {children}
