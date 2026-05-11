@@ -2,6 +2,7 @@ import { FlatList, Text, View } from "react-native";
 import { HomeHeader } from "@/components/HomeHeader";
 import { ServiceCard } from "@/components/ServiceCard";
 import { InvestmentCard } from "@/components/InvestmentCard";
+import { DataLoading } from "@/components/DataLoading";
 import { useInvestments } from "@/context/investments.context";
 import { investmentToCardItem } from "@/shared/utils/calculateInvestmentIncome";
 
@@ -36,7 +37,12 @@ function InvestmentRowSeparator() {
 }
 
 export default function Home() {
-  const { investments, selectedInvestment, selectInvestment } = useInvestments();
+  const { investments, selectedInvestment, selectInvestment, loading } =
+    useInvestments();
+
+  if (loading) {
+    return <DataLoading />;
+  }
 
   return (
     <FlatList

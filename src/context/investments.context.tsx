@@ -85,6 +85,8 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      setLoading(true);
+
       const userInvestmentsRef = ref(
         database,
         `users/${user.uid}/investments`

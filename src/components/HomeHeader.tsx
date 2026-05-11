@@ -16,6 +16,7 @@ export function HomeHeader() {
   const navigation = useNavigation();
   const { selectedInvestment, TotalBalance, handleToggleBalance, showData } =
     useInvestments();
+
   function handleOpenDrawer() {
     const parentNavigation = navigation.getParent();
 

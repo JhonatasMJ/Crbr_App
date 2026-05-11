@@ -207,6 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /* Faz Logout */
   async function logout() {
     try {
+      await clearRememberedLogin();
       setLoading(true);
       await signOut(auth);
     } catch (error) {
