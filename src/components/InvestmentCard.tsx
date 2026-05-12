@@ -7,6 +7,7 @@ import { INVESTMENT_CARD_STYLE, InvestmentCardVariant } from "@/shared/strategie
 import { RightAction } from "./RightAction";
 
 type InvestmentCardProps = {
+  investmentId: string;
   selected?: boolean;
   onPress?: () => void;
   name: string;
@@ -23,6 +24,7 @@ function remainingLabel(days: number): string {
 }
 
 export function InvestmentCard({
+  investmentId,
   selected = false,
   onPress,
   name,
@@ -36,17 +38,19 @@ export function InvestmentCard({
   const style = INVESTMENT_CARD_STYLE[variant];
 
   return (
-    <Swipeable
-      containerStyle={{
-        overflow: "visible",
-        width: "100%",
-        marginTop: 16,
-      }}
-      overshootRight={false}
-      renderRightActions={() => <RightAction />}
-    >
-      <Pressable onPress={onPress} className="px-4">
-        <View className={`rounded-md p-4 ${style.containerBg}`}>
+    <View className="mt-4 w-full px-6">
+      <Swipeable
+        containerStyle={{
+          overflow: "visible",
+          width: "100%",
+        }}
+        overshootRight={false}
+        renderRightActions={() => (
+          <RightAction investmentId={investmentId} />
+        )}
+      >
+        <Pressable onPress={onPress}>
+          <View className={`rounded-md p-4 ${style.containerBg}`}>
           <Text className={`font-sans-semibold text-lg ${style.titleText}`}>
             {name}
           </Text>
@@ -71,8 +75,9 @@ export function InvestmentCard({
               />
             </View>
           ) : null}
-        </View>
-      </Pressable>
-    </Swipeable>
+          </View>
+        </Pressable>
+      </Swipeable>
+    </View>
   );
 }

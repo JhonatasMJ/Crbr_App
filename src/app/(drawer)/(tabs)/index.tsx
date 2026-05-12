@@ -54,6 +54,7 @@ export default function Home() {
         const card = investmentToCardItem(item);
         return (
           <InvestmentCard
+            investmentId={item.id ?? ""}
             selected={selectedInvestment?.id === item.id}
             onPress={() => selectInvestment(item.id)}
             name={card.name}

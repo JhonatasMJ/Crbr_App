@@ -90,22 +90,27 @@ function addMonths(date: Date, months: number): Date {
   return result;
 }
 
-/** Mesmo intervalo usado no rendimento: início → fim (duration ou endDate). */
+/** Mesmo intervalo usado no rendimento: início → fim (endDate explícito tem prioridade). */
 function resolveInvestmentPeriod(
   startDate?: string,
   endDate?: string,
   duration?: string
 ): { start: Date; end: Date } | null {
   const start = parseDate(startDate);
+  if (!start) return null;
+
   const parsedEndDate = parseDate(endDate);
   const durationMonths = getDurationMonths(duration);
-  const end =
-    start && durationMonths ? addMonths(start, durationMonths) : parsedEndDate;
 
-  if (!start || !end) return null;
-  const totalMs = end.getTime() - start.getTime();
-  if (totalMs <= 0) return null;
+  let end: Date | null = null;
+  if (parsedEndDate && parsedEndDate.getTime() > start.getTime()) {
+    end = parsedEndDate;
+  } else if (durationMonths != null) {
+    const fromDuration = addMonths(start, durationMonths);
+    if (fromDuration.getTime() > start.getTime()) end = fromDuration;
+  }
 
+  if (!end) return null;
   return { start, end };
 }
 
@@ -140,6 +145,27 @@ export function getInvestmentProgressInfo(
     progressPercent: Math.round(progressRatio * 100),
     daysRemaining,
   };
+}
+
+/** Menos dias até o vencimento primeiro; sem período válido por último. */
+export function compareInvestmentsByDaysRemaining(
+  a: InvestmentsParams,
+  b: InvestmentsParams
+): number {
+  const pa = getInvestmentProgressInfo({
+    startDate: a.startDate,
+    endDate: a.endDate,
+    duration: a.duration,
+  });
+  const pb = getInvestmentProgressInfo({
+    startDate: b.startDate,
+    endDate: b.endDate,
+    duration: b.duration,
+  });
+  const da = pa?.daysRemaining ?? Number.MAX_SAFE_INTEGER;
+  const db = pb?.daysRemaining ?? Number.MAX_SAFE_INTEGER;
+  if (da !== db) return da - db;
+  return (a.id ?? "").localeCompare(b.id ?? "");
 }
 
 export function calculateInvestmentIncome({

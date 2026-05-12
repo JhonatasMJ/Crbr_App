@@ -1,15 +1,33 @@
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import { Trash } from "lucide-react-native";
+import { Modal } from "./Modal";
+import { useInvestments } from "@/context/investments.context";
 
-export function RightAction() {
+type RightActionProps = {
+  investmentId: string;
+};
+
+export function RightAction({ investmentId }: RightActionProps) {
+  const { deleteInvestment } = useInvestments();
+
+  function handleDeleteInvestment() {
+    if (!investmentId) return;
+    deleteInvestment(investmentId);
+  }
   return (
     <>
-      <TouchableOpacity
-        activeOpacity={0.8}
-        className="h-[140] bg-red-500  w-[80] rounded-r-md items-center justify-center"
-      >
-        <Trash size={30} color="white" />
-      </TouchableOpacity>
+      <Modal
+        title="Deletar investimento"
+        description="Tem certeza que deseja deletar o investimento?"
+        onConfirm={handleDeleteInvestment}
+        trigger={
+          <Pressable
+            className="h-[140] bg-red-500  w-[80] rounded-r-md items-center justify-center"
+          >
+            <Trash size={30} color="white" />
+          </Pressable>
+        }
+      />
     </>
   );
 }

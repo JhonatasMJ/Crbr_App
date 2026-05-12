@@ -8,13 +8,15 @@ import {
 } from "react";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, remove } from "firebase/database";
 import { auth, database } from "@/shared/services/firebase";
 import {
+  compareInvestmentsByDaysRemaining,
   getInvestmentBalance,
   getInvestmentPrincipal,
 } from "@/shared/utils/calculateInvestmentIncome";
 import { InvestmentsParams } from "@/types/investmentsParams";
+import { useSnackBarContext } from "./snackbar.context";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
@@ -26,6 +28,7 @@ type InvestmentsContextType = {
   loading: boolean;
   handleToggleBalance: () => void;
   showData: boolean;
+  deleteInvestment: (id: string) => void;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -37,6 +40,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     string | undefined
   >(undefined);
   const [showData, setShowData] = useState(true);
+  const { notify } = useSnackBarContext();
 
   const selectedInvestment = useMemo(() => {
     if (!investments.length) return undefined;
@@ -109,7 +113,8 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
           .map(([id, value]) => ({
             id,
             ...(value as Omit<InvestmentsParams, "id">),
-          }));
+          }))
+          .sort(compareInvestmentsByDaysRemaining);
 
         setInvestments(results);
 
@@ -129,6 +134,18 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   function handleToggleBalance() {
     setShowData(!showData);
   }
+  async function deleteInvestment(id: string) {
+    try {
+      await remove(ref(database, `users/${auth.currentUser?.uid}/investments/${id}`));
+    } catch (error) {
+      console.error(error);
+      notify({
+        message: "Erro ao deletar investimento",
+        messageType: "ERROR",
+      });
+      throw error;
+    }
+  }
 
   return (
     <InvestmentsContext.Provider
@@ -141,6 +158,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
         loading,
         handleToggleBalance,
         showData,
+        deleteInvestment,
       }}
     >
       {children}

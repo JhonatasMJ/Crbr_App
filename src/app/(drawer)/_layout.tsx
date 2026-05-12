@@ -1,6 +1,6 @@
 import { Drawer } from "expo-router/drawer";
 import { CreditCard, User, Users, LogOut } from "lucide-react-native";
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import {
   DrawerContentScrollView,
   DrawerItemList,
@@ -62,12 +62,12 @@ export default function DrawerLayout() {
               description="Tem certeza que deseja sair da conta?"
               onConfirm={handleLogout}
               trigger={
-                <View className="flex-row items-center justify-center gap-2">
+                <Pressable className="flex-row items-center justify-center gap-2">
                   <LogOut color="#FFBF00" size={18} />
                   <Text className="text-white font-sans-semibold text-lg">
                     Sair da conta
                   </Text>
-                </View>
+                </Pressable>
               }
             />
           </View>
