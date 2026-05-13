@@ -1,14 +1,18 @@
 import { maskCPF } from "@/shared/utils/masks/cpfMask";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, StyleSheet } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import type { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Progress } from "./ui/progress";
 import { RightActionBeneficiary } from "./RightActionBeneficiary";
 import { LeftActionBeneficiary } from "./LeftActionBeneficiary";
 
+/** Largura fixa — o Swipeable mede o painel; evitar `flex-1` nas ações. */
+const BENEFICIARY_SWIPE_ACTION_W = 80;
+
 type BeneficiaryCardProps = {
   beneficiaryId: string;
   onPress?: () => void;
-  /** Swipe para a esquerda: abre edição */
+  /** Edição: arrastar o card para a direita (painel à esquerda) */
   onEditPress: () => void;
   name: string;
   cpf: string;
@@ -28,17 +32,37 @@ export function BeneficiaryCard({
   return (
     <View className="w-full">
       <Swipeable
-        containerStyle={{
-          overflow: "visible",
-          width: "100%",
-        }}
+        containerStyle={styles.swipeContainer}
         overshootRight={false}
         overshootLeft={false}
-        renderRightActions={() => (
-          <RightActionBeneficiary beneficiaryId={beneficiaryId} />
+        renderLeftActions={(
+          _progress,
+          _translation,
+          swipeableMethods: SwipeableMethods,
+        ) => (
+          <View
+            style={{
+              width: BENEFICIARY_SWIPE_ACTION_W,
+              height: "100%",
+            }}
+          >
+            <LeftActionBeneficiary
+              onEditPress={() => {
+                swipeableMethods.close();
+                onEditPress();
+              }}
+            />
+          </View>
         )}
-        renderLeftActions={() => (
-          <LeftActionBeneficiary onEditPress={onEditPress} />
+        renderRightActions={() => (
+          <View
+            style={{
+              width: BENEFICIARY_SWIPE_ACTION_W,
+              height: "100%",
+            }}
+          >
+            <RightActionBeneficiary beneficiaryId={beneficiaryId} />
+          </View>
         )}
       >
         <Pressable onPress={onPress} className="active:opacity-90">
@@ -77,3 +101,10 @@ export function BeneficiaryCard({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  swipeContainer: {
+    width: "100%",
+    overflow: "hidden",
+  },
+});
