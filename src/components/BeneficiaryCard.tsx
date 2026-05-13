@@ -1,12 +1,15 @@
-import { maskCPF, onlyNumbers } from "@/shared/utils/masks/cpfMask";
+import { maskCPF } from "@/shared/utils/masks/cpfMask";
 import { Pressable, Text, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Progress } from "./ui/progress";
 import { RightActionBeneficiary } from "./RightActionBeneficiary";
+import { LeftActionBeneficiary } from "./LeftActionBeneficiary";
 
 type BeneficiaryCardProps = {
   beneficiaryId: string;
   onPress?: () => void;
+  /** Swipe para a esquerda: abre edição */
+  onEditPress: () => void;
   name: string;
   cpf: string;
   percentage: number;
@@ -15,6 +18,7 @@ type BeneficiaryCardProps = {
 export function BeneficiaryCard({
   beneficiaryId,
   onPress,
+  onEditPress,
   name,
   cpf,
   percentage,
@@ -29,20 +33,21 @@ export function BeneficiaryCard({
           width: "100%",
         }}
         overshootRight={false}
+        overshootLeft={false}
         renderRightActions={() => (
           <RightActionBeneficiary beneficiaryId={beneficiaryId} />
+        )}
+        renderLeftActions={() => (
+          <LeftActionBeneficiary onEditPress={onEditPress} />
         )}
       >
         <Pressable onPress={onPress} className="active:opacity-90">
           <View className="rounded-md  bg-secondary p-4">
-            <Text
-              numberOfLines={2}
-              className="font-sans-semibold text-lg leading-tight text-white"
-            >
+            <Text className="font-sans-semibold text-lg leading-tight text-white">
               {name}
             </Text>
 
-            <Text className="mt-2 font-sans-medium text-xs uppercase tracking-wide text-white/80">
+            <Text className="mt-2 font-sans-medium text-xs uppercase tracking-wide text-primary">
               CPF
             </Text>
             <Text className="mt-0.5 font-sans-semibold text-base text-white">

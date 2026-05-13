@@ -12,6 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function Beneficiary() {
   const { beneficiary } = useBeneficiary();
   const [formOpen, setFormOpen] = useState(false);
+  const [editingBeneficiary, setEditingBeneficiary] =
+    useState<BeneficiaryType | null>(null);
 
   const totalPercentage = useMemo(
     () =>
@@ -23,7 +25,18 @@ export default function Beneficiary() {
   );
 
   const showAddBeneficiaryButton = totalPercentage < 100;
-  const maxPercentage = Math.max(0, 100 - totalPercentage);
+  const maxPercentageAdd = Math.max(0, 100 - totalPercentage);
+  const maxPercentageModal = editingBeneficiary
+    ? Math.max(
+        0,
+        100 - totalPercentage + (Number(editingBeneficiary.percentage) || 0),
+      )
+    : maxPercentageAdd;
+
+  function handleModalOpenChange(open: boolean) {
+    setFormOpen(open);
+    if (!open) setEditingBeneficiary(null);
+  }
 
   return (
     <View className="flex-1 bg-background">
@@ -52,6 +65,14 @@ export default function Beneficiary() {
                   name={item.name}
                   cpf={item.cpf}
                   percentage={item.percentage}
+                  onPress={() => {
+                    setEditingBeneficiary(item);
+                    setFormOpen(true);
+                  }}
+                  onEditPress={() => {
+                    setEditingBeneficiary(item);
+                    setFormOpen(true);
+                  }}
                 />
               )}
               keyExtractor={(item) => item.id}
@@ -76,7 +97,10 @@ export default function Beneficiary() {
             <Button
               className="bg-primary"
               size="xl"
-              onPress={() => setFormOpen(true)}
+              onPress={() => {
+                setEditingBeneficiary(null);
+                setFormOpen(true);
+              }}
             >
               <Text className="font-sans-bold text-lg text-black">
                 Adicionar beneficiário
@@ -88,8 +112,9 @@ export default function Beneficiary() {
 
       <ModalBeneficiary
         open={formOpen}
-        onOpenChange={setFormOpen}
-        maxPercentage={maxPercentage}
+        onOpenChange={handleModalOpenChange}
+        maxPercentage={maxPercentageModal}
+        beneficiaryToEdit={editingBeneficiary}
       />
     </View>
   );

@@ -4,7 +4,8 @@ import {
   beneficiaryFormSchema,
   type BeneficiaryFormValues,
 } from "@/shared/schemas/beneficiaryForm";
-import { onlyNumbers } from "@/shared/utils/masks/cpfMask";
+import { maskCPF, onlyNumbers } from "@/shared/utils/masks/cpfMask";
+import type { Beneficiary } from "@/types/beneficiary";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,6 +13,8 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Text } from "./ui/text";
@@ -21,14 +24,17 @@ type ModalBeneficiaryProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   maxPercentage: number;
+  /** Quando informado, o modal salva com `updateBeneficiary` em vez de criar. */
+  beneficiaryToEdit?: Beneficiary | null;
 };
 
 export function ModalBeneficiary({
   open,
   onOpenChange,
   maxPercentage,
+  beneficiaryToEdit = null,
 }: ModalBeneficiaryProps) {
-  const { addBeneficiary } = useBeneficiary();
+  const { addBeneficiary, updateBeneficiary } = useBeneficiary();
   const { notify } = useSnackBarContext();
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,8 +45,16 @@ export function ModalBeneficiary({
 
   useEffect(() => {
     if (!open) return;
-    reset({ name: "", cpf: "", percentage: "" });
-  }, [open, reset]);
+    if (beneficiaryToEdit) {
+      reset({
+        name: beneficiaryToEdit.name,
+        cpf: maskCPF(beneficiaryToEdit.cpf),
+        percentage: String(beneficiaryToEdit.percentage).replace(".", ","),
+      });
+    } else {
+      reset({ name: "", cpf: "", percentage: "" });
+    }
+  }, [open, reset, beneficiaryToEdit]);
 
   async function onSubmit(data: BeneficiaryFormValues) {
     const pct = Number(String(data.percentage).replace(",", "."));
@@ -53,15 +67,27 @@ export function ModalBeneficiary({
     }
     try {
       setSubmitting(true);
-      await addBeneficiary({
-        name: data.name.trim(),
-        cpf: onlyNumbers(data.cpf),
-        percentage: pct,
-      });
-      notify({
-        message: "Beneficiário adicionado com sucesso",
-        messageType: "SUCCESS",
-      });
+      if (beneficiaryToEdit) {
+        await updateBeneficiary(beneficiaryToEdit.id, {
+          name: data.name.trim(),
+          cpf: onlyNumbers(data.cpf),
+          percentage: pct,
+        });
+        notify({
+          message: "Beneficiário atualizado com sucesso",
+          messageType: "SUCCESS",
+        });
+      } else {
+        await addBeneficiary({
+          name: data.name.trim(),
+          cpf: onlyNumbers(data.cpf),
+          percentage: pct,
+        });
+        notify({
+          message: "Beneficiário adicionado com sucesso",
+          messageType: "SUCCESS",
+        });
+      }
       onOpenChange(false);
     } catch (error) {
       console.error(error);
@@ -70,9 +96,16 @@ export function ModalBeneficiary({
     }
   }
 
+  const isEdit = Boolean(beneficiaryToEdit);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-full">
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? "Editar beneficiário" : "Adicionar beneficiário"}
+          </DialogTitle>
+        </DialogHeader>
         <BeneficiaryForm
           control={control}
           maxPercentage={maxPercentage}
