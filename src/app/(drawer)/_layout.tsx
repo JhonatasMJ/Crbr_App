@@ -100,7 +100,7 @@ export default function DrawerLayout() {
       />
 
       <Drawer.Screen
-        name="beneficiaries"
+        name="beneficiary"
         options={{
           title: "Beneficiários",
           drawerIcon: ({ color, size }) => <Users size={size} color={color} />,

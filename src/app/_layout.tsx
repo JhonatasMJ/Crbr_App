@@ -13,6 +13,7 @@ import {
 } from "@expo-google-fonts/titillium-web";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider } from "@/context/auth.context";
+import { BeneficiaryProvider } from "@/context/beneficiary.context";
 import { InvestmentsProvider } from "@/context/investments.context";
 import "react-native-gesture-handler";
 import { SnackBarContextProvider } from "@/context/snackbar.context";
@@ -40,10 +41,12 @@ export default function RootLayout() {
       <SnackBarContextProvider>
         <AuthProvider>
           <InvestmentsProvider>
-            <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false }} />
-            <SnackBar />
-            <PortalHost />
+            <BeneficiaryProvider>
+              <StatusBar style="light" />
+              <Stack screenOptions={{ headerShown: false }} />
+              <SnackBar />
+              <PortalHost />
+            </BeneficiaryProvider>
           </InvestmentsProvider>
         </AuthProvider>
       </SnackBarContextProvider>

@@ -19,7 +19,7 @@ export function Header({ span, title, logo = true }: HeaderProps) {
   return (
     <SafeAreaView edges={logo ? [] : ["top"]} className="bg-primary">
       <View
-        className={`bg-primary rounded-b-xl px-6 ${logo ? "h-48 pt-2 pb-6" : "pt-2 pb-5"}`}
+        className={`bg-primary rounded-b-xl px-6 ${logo ? "h-48 pt-6 pb-6" : "pt-2 pb-5"}`}
       >
         <View className="relative min-h-10 flex-row items-center justify-center">
           <View className="absolute left-0 z-10">
