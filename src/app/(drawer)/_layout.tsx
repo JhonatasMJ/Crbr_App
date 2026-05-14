@@ -1,5 +1,5 @@
 import { Drawer } from "expo-router/drawer";
-import { CreditCard, User, Users, LogOut } from "lucide-react-native";
+import { CreditCard, User, Users, LogOut, Home } from "lucide-react-native";
 import { View, Text, Pressable } from "react-native";
 import {
   DrawerContentScrollView,
@@ -11,6 +11,11 @@ import { formatName } from "@/shared/utils/formatName";
 import { Modal } from "@/components/Modal";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { colors } from "@/themes/colors";
+
+function drawerIconColor(focused: boolean) {
+  return focused ? "#000000" : colors.primary;
+}
 
 export default function DrawerLayout() {
   const { user, logout } = useAuth();
@@ -26,17 +31,26 @@ export default function DrawerLayout() {
       screenOptions={{
         headerShown: false,
         drawerStyle: {
-          backgroundColor: "#000",
+          backgroundColor: colors.background,
           borderRadius: 0,
           width: "70%",
         },
         drawerLabelStyle: {
-          color: "#fff",
           fontFamily: "TitilliumSemiBold",
           fontSize: 16,
+          marginLeft: -4,
         },
-        drawerActiveTintColor: "#fff",
-        drawerInactiveTintColor: "#FFBF00",
+        drawerItemStyle: {
+          borderRadius: 6,
+          marginHorizontal: 10,
+          marginVertical: 5,
+          paddingVertical: 3,
+          overflow: "hidden",
+        },
+        drawerActiveTintColor: "#000000",
+        drawerInactiveTintColor: colors.foreground,
+        drawerActiveBackgroundColor: colors.primary,
+        drawerInactiveBackgroundColor: "transparent",
       }}
       drawerContent={(props) => (
         <View className="flex-1 bg-background justify-between">
@@ -63,7 +77,7 @@ export default function DrawerLayout() {
               onConfirm={handleLogout}
               trigger={
                 <Pressable className="flex-row items-center justify-center gap-2">
-                  <LogOut color="#FFBF00" size={18} />
+                  <LogOut color={colors.primary} size={18} />
                   <Text className="text-white font-sans-semibold text-lg">
                     Sair da conta
                   </Text>
@@ -75,9 +89,12 @@ export default function DrawerLayout() {
       )}
     >
       <Drawer.Screen
-        name="(tabs)"
-        options={{
-          drawerItemStyle: { display: "none" },
+         name="(tabs)"
+         options={{
+          title: "Início",
+          drawerIcon: ({ focused, size }) => (
+            <Home size={size} color={drawerIconColor(focused)} />
+          ),
         }}
       />
 
@@ -85,7 +102,9 @@ export default function DrawerLayout() {
         name="profile"
         options={{
           title: "Perfil",
-          drawerIcon: ({ color, size }) => <User size={size} color={color} />,
+          drawerIcon: ({ focused, size }) => (
+            <User size={size} color={drawerIconColor(focused)} />
+          ),
         }}
       />
 
@@ -93,8 +112,8 @@ export default function DrawerLayout() {
         name="payments"
         options={{
           title: "Pagamentos",
-          drawerIcon: ({ color, size }) => (
-            <CreditCard size={size} color={color} />
+          drawerIcon: ({ focused, size }) => (
+            <CreditCard size={size} color={drawerIconColor(focused)} />
           ),
         }}
       />
@@ -103,7 +122,9 @@ export default function DrawerLayout() {
         name="beneficiary"
         options={{
           title: "Beneficiários",
-          drawerIcon: ({ color, size }) => <Users size={size} color={color} />,
+          drawerIcon: ({ focused, size }) => (
+            <Users size={size} color={drawerIconColor(focused)} />
+          ),
         }}
       />
     </Drawer>
