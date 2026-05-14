@@ -1,5 +1,12 @@
 import { Drawer } from "expo-router/drawer";
-import { CreditCard, User, Users, LogOut, Home } from "lucide-react-native";
+import {
+  CreditCard,
+  DollarSign,
+  User,
+  Users,
+  LogOut,
+  Home,
+} from "lucide-react-native";
 import { View, Text, Pressable } from "react-native";
 import {
   DrawerContentScrollView,
@@ -44,7 +51,7 @@ export default function DrawerLayout() {
           borderRadius: 6,
           marginHorizontal: 10,
           marginVertical: 5,
-          paddingVertical: 3,
+          paddingVertical: 1,
           overflow: "hidden",
         },
         drawerActiveTintColor: "#000000",
@@ -89,11 +96,21 @@ export default function DrawerLayout() {
       )}
     >
       <Drawer.Screen
-         name="(tabs)"
-         options={{
+        name="index"
+        options={{
           title: "Início",
           drawerIcon: ({ focused, size }) => (
             <Home size={size} color={drawerIconColor(focused)} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="investments"
+        options={{
+          title: "Investir",
+          drawerIcon: ({ focused, size }) => (
+            <DollarSign size={size} color={drawerIconColor(focused)} />
           ),
         }}
       />

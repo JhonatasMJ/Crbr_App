@@ -2,7 +2,12 @@ import { useAuth } from "@/context/auth.context";
 import { getFirstName } from "@/shared/utils/formatName";
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { Text, View, Pressable, FlatList, TextInput } from "react-native";
-import { DrawerActions, useNavigation } from "@react-navigation/native";
+import {
+  DrawerActions,
+  useNavigation,
+  type NavigationProp,
+  type ParamListBase,
+} from "@react-navigation/native";
 import Logo from "@/assets/logoSvg.svg";
 import Line from "@/assets/line.svg";
 import { Eye, EyeOff, Menu } from "lucide-react-native";
@@ -18,14 +23,20 @@ export function HomeHeader() {
     useInvestments();
 
   function handleOpenDrawer() {
-    const parentNavigation = navigation.getParent();
-
-    if (parentNavigation) {
-      parentNavigation.dispatch(DrawerActions.openDrawer());
-      return;
+    let current = navigation as NavigationProp<ParamListBase>;
+    for (let i = 0; i < 8 && current; i++) {
+      const state = current.getState();
+      if (
+        state &&
+        typeof state === "object" &&
+        "type" in state &&
+        state.type === "drawer"
+      ) {
+        current.dispatch(DrawerActions.openDrawer());
+        return;
+      }
+      current = current.getParent() as NavigationProp<ParamListBase>;
     }
-
-    navigation.dispatch(DrawerActions.openDrawer());
   }
 
   return (

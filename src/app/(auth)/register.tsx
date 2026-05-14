@@ -12,8 +12,14 @@ import { registerFullSchema } from "@/shared/schemas/registerFullSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useAuth } from "@/context/auth.context";
 import { ActivityIndicator } from "react-native";
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 const steps = ["account", "contact", "password"] as const;
+
+const STEP_ORDER: Record<(typeof steps)[number], number> = {
+  account: 0,
+  contact: 1,
+  password: 2,
+};
 
 export default function Register() {
   const { register, loading, user } = useAuth();
@@ -39,31 +45,52 @@ export default function Register() {
     mode: "onChange",
   });
 
-  /* Função para ir para a próxima aba */
-  function goToTab(next: (typeof steps)[number]) {
-    setActiveTab(next);
+  async function handleTabChange(next: (typeof steps)[number]) {
+    if (next === activeTab) return;
+
+    if (STEP_ORDER[next] < STEP_ORDER[activeTab]) {
+      setActiveTab(next);
+      return;
+    }
+
+    if (activeTab === "account" && next === "contact") {
+      const ok = await trigger(["name", "email", "cpf"], { shouldFocus: true });
+      if (ok) setActiveTab("contact");
+      return;
+    }
+
+    if (activeTab === "account" && next === "password") {
+      const accountOk = await trigger(["name", "email", "cpf"], {
+        shouldFocus: true,
+      });
+      if (!accountOk) return;
+      const contactOk = await trigger(["phoneNumber", "birthDate", "city"], {
+        shouldFocus: true,
+      });
+      if (contactOk) setActiveTab("password");
+      return;
+    }
+
+    if (activeTab === "contact" && next === "password") {
+      const ok = await trigger(["phoneNumber", "birthDate", "city"], {
+        shouldFocus: true,
+      });
+      if (ok) setActiveTab("password");
+    }
   }
 
-  /* Função para ir para a próxima aba a partir da aba de conta */
   async function goNextFromAccount() {
-    const valid = await trigger(["name", "email", "cpf"], {
-      shouldFocus: true,
-    });
-    if (valid) goToTab("contact");
+    await handleTabChange("contact");
   }
 
-  /* Função para ir para a próxima aba a partir da aba de contato */
   async function goNextFromContact() {
-    const valid = await trigger(["phoneNumber", "birthDate", "city"], {
-      shouldFocus: true,
-    });
-    if (valid) goToTab("password");
+    await handleTabChange("password");
   }
 
   /* Redireciona para a tela de login se o usuário estiver logado */
   useEffect(() => {
     if (user) {
-      router.replace("/(drawer)/(tabs)");
+      router.replace("/(drawer)" as Href);
     }
   }, [user]);
 
@@ -101,13 +128,13 @@ export default function Register() {
             value={activeTab}
             onValueChange={(v) => {
               if (v === "account" || v === "contact" || v === "password") {
-                setActiveTab(v);
+                void handleTabChange(v);
               }
             }}
             className="mt-6"
           >
             <TabsList className="bg-secondary ">
-              <TabsTrigger value="account">Pessoais</TabsTrigger>
+              <TabsTrigger  value="account">Pessoais</TabsTrigger>
               <TabsTrigger value="contact">Contato</TabsTrigger>
               <TabsTrigger value="password">Senha</TabsTrigger>
             </TabsList>

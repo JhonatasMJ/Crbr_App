@@ -1,8 +1,9 @@
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import { HomeHeader } from "@/components/HomeHeader";
 import { ServiceCard } from "@/components/ServiceCard";
 import { InvestmentCard } from "@/components/InvestmentCard";
 import { DataLoading } from "@/components/DataLoading";
+import { Text } from "@/components/ui/text";
 import { useInvestments } from "@/context/investments.context";
 import { investmentToCardItem } from "@/shared/utils/calculateInvestmentIncome";
 
@@ -45,30 +46,32 @@ export default function Home() {
   }
 
   return (
-    <FlatList
-      className="flex-1 bg-background"
-      data={investments}
-      keyExtractor={(item) => item.id ?? ""}
-      ListHeaderComponent={<HomeListHeader />}
-      renderItem={({ item }) => {
-        const card = investmentToCardItem(item);
-        return (
-          <InvestmentCard
-            investmentId={item.id ?? ""}
-            selected={selectedInvestment?.id === item.id}
-            onPress={() => selectInvestment(item.id)}
-            name={card.name}
-            amount={card.amount}
-            startDate={item.startDate}
-            endDate={item.endDate}
-            duration={item.duration}
-          />
-        );
-      }}
-      ItemSeparatorComponent={InvestmentRowSeparator}
-      ListFooterComponent={<View className="h-8" />}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    />
+    <View className="flex-1 bg-background">
+      <FlatList
+        className="flex-1"
+        data={investments}
+        keyExtractor={(item) => item.id ?? ""}
+        ListHeaderComponent={<HomeListHeader />}
+        renderItem={({ item }) => {
+          const card = investmentToCardItem(item);
+          return (
+            <InvestmentCard
+              investmentId={item.id ?? ""}
+              selected={selectedInvestment?.id === item.id}
+              onPress={() => selectInvestment(item.id)}
+              name={card.name}
+              amount={card.amount}
+              startDate={item.startDate}
+              endDate={item.endDate}
+              duration={item.duration}
+            />
+          );
+        }}
+        ItemSeparatorComponent={InvestmentRowSeparator}
+        ListFooterComponent={<View className="h-8" />}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
+    </View>
   );
 }

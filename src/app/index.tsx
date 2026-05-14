@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
 import { colors } from "@/themes/colors";
-import { Link, router } from "expo-router";
+import { Link, router, type Href } from "expo-router";
 import { useAuth } from "@/context/auth.context";
 const { width, height } = Dimensions.get("window");
 
@@ -53,7 +53,7 @@ export default function Index() {
     if (initializing) return;
 
     if (user) {
-      router.replace("/(drawer)/(tabs)");
+      router.replace("/(drawer)" as Href);
       return;
     }
 
