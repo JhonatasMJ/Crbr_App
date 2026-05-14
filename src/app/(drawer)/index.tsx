@@ -47,6 +47,7 @@ export default function Home() {
 
   return (
     <View className="flex-1 bg-background">
+      
       <FlatList
         className="flex-1"
         data={investments}
