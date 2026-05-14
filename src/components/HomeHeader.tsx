@@ -19,7 +19,7 @@ import { Button } from "./ui/button";
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { selectedInvestment, TotalBalance, handleToggleBalance, showData } =
+  const { selectedInvestment, TotalBalance, allInvestments, handleToggleBalance, showData } =
     useInvestments();
 
   function handleOpenDrawer() {
@@ -47,7 +47,9 @@ export function HomeHeader() {
         </Pressable>
         <View className="flex-row items-center gap-2">
           <View>
-            <Text className="font-sans-semibold text- text-right">Olá,</Text>
+            <Text className="font-sans-semibold text-right text-primary-foreground">
+              Olá,
+            </Text>
             <Text className="text-secondary font-sans-bold text-xl">
               {getFirstName(user?.displayName || "")}
             </Text>
@@ -106,6 +108,19 @@ export function HomeHeader() {
             />
           )}
         />
+        <View className="mt-5 flex-row items-center justify-between rounded-md bg-primary-foreground px-3 py-2">
+          <Text className="font-sans-semibold text-base text-white">
+            Total investido<Text className="font-sans-medium text-sm text-primary">.</Text>
+          </Text>
+          <TextInput
+            editable={false}
+            selectTextOnFocus={false}
+            secureTextEntry={!showData}
+            className="min-w-[100px] flex-shrink font-sans-bold text-lg text-white p-0 m-0 text-right"
+            style={{ includeFontPadding: false, textAlignVertical: "center" }}
+            value={formatInvestmentAmount(allInvestments)}
+          />
+        </View>
       </View>
     </View>
   );
