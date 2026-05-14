@@ -18,6 +18,8 @@ import { InvestmentsProvider } from "@/context/investments.context";
 import "react-native-gesture-handler";
 import { SnackBarContextProvider } from "@/context/snackbar.context";
 import { SnackBar } from "@/components/SnackBar";
+import { BottomSheetProvider } from "@/context/bottomShet.context";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -37,19 +39,23 @@ export default function RootLayout() {
   }
 
   return (
+    <GestureHandlerRootView className="flex-1">
     <ThemeProvider value={NAV_THEME[colorScheme ?? "light"]}>
       <SnackBarContextProvider>
         <AuthProvider>
           <InvestmentsProvider>
             <BeneficiaryProvider>
+              <BottomSheetProvider>
               <StatusBar style="light" />
               <Stack screenOptions={{ headerShown: false }} />
               <SnackBar />
               <PortalHost />
+              </BottomSheetProvider>
             </BeneficiaryProvider>
           </InvestmentsProvider>
         </AuthProvider>
       </SnackBarContextProvider>
     </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

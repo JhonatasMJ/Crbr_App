@@ -1,4 +1,8 @@
+import { BeneficiaryForm } from "@/components/Forms/BeneficiaryForm";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { useBeneficiary } from "@/context/beneficiary.context";
+import { useBottomSheetContext } from "@/context/bottomShet.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
 import {
   beneficiaryFormSchema,
@@ -9,33 +13,20 @@ import type { Beneficiary } from "@/types/beneficiary";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Text } from "./ui/text";
-import { BeneficiaryForm } from "./Forms/BeneficiaryForm";
+import { View } from "react-native";
 
-type ModalBeneficiaryProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+type BeneficiarySheetContentProps = {
   maxPercentage: number;
-  /** Quando informado, o modal salva com `updateBeneficiary` em vez de criar. */
   beneficiaryToEdit?: Beneficiary | null;
 };
 
-export function ModalBeneficiary({
-  open,
-  onOpenChange,
+export function BeneficiarySheetContent({
   maxPercentage,
   beneficiaryToEdit = null,
-}: ModalBeneficiaryProps) {
+}: BeneficiarySheetContentProps) {
   const { addBeneficiary, updateBeneficiary } = useBeneficiary();
   const { notify } = useSnackBarContext();
+  const { closeBottomSheet } = useBottomSheetContext();
   const [submitting, setSubmitting] = useState(false);
 
   const { control, reset, handleSubmit } = useForm<BeneficiaryFormValues>({
@@ -44,7 +35,6 @@ export function ModalBeneficiary({
   });
 
   useEffect(() => {
-    if (!open) return;
     if (beneficiaryToEdit) {
       reset({
         name: beneficiaryToEdit.name,
@@ -54,7 +44,7 @@ export function ModalBeneficiary({
     } else {
       reset({ name: "", cpf: "", percentage: "" });
     }
-  }, [open, reset, beneficiaryToEdit]);
+  }, [beneficiaryToEdit, reset]);
 
   async function onSubmit(data: BeneficiaryFormValues) {
     const pct = Number(String(data.percentage).replace(",", "."));
@@ -88,7 +78,7 @@ export function ModalBeneficiary({
           messageType: "SUCCESS",
         });
       }
-      onOpenChange(false);
+      closeBottomSheet();
     } catch (error) {
       console.error(error);
     } finally {
@@ -99,37 +89,33 @@ export function ModalBeneficiary({
   const isEdit = Boolean(beneficiaryToEdit);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-full">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Editar beneficiário" : "Adicionar beneficiário"}
-          </DialogTitle>
-        </DialogHeader>
-        <BeneficiaryForm
-          control={control}
-          maxPercentage={maxPercentage}
-        />
+    <View className="px-6 pb-8 pt-2">
+      <Text className="mb-4 font-sans-bold text-xl text-white">
+        {isEdit ? "Editar beneficiário" : "Adicionar beneficiário"}
+      </Text>
 
-        <DialogFooter className="w-full flex-row gap-2">
-          <Button
-            className="h-11 flex-1 bg-red-500 active:bg-red-600"
-            disabled={submitting}
-            onPress={() => onOpenChange(false)}
-          >
-            <Text className="text-center  text-white font-sans-semibold">Cancelar</Text>
-          </Button>
-          <Button
-            className="h-11 flex-1 bg-primary"
-            disabled={submitting}
-            onPress={handleSubmit(onSubmit)}
-          >
-            <Text className="text-center font-sans-semibold text-black">
-              {submitting ? "Salvando..." : "Salvar"}
-            </Text>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <BeneficiaryForm control={control} maxPercentage={maxPercentage} />
+
+      <View className="mt-6 w-full flex-row gap-2">
+        <Button
+          className="h-11 flex-1 bg-red-500 active:bg-red-600"
+          disabled={submitting}
+          onPress={closeBottomSheet}
+        >
+          <Text className="text-center font-sans-semibold text-white">
+            Cancelar
+          </Text>
+        </Button>
+        <Button
+          className="h-11 flex-1 bg-primary"
+          disabled={submitting}
+          onPress={handleSubmit(onSubmit)}
+        >
+          <Text className="text-center font-sans-semibold text-black">
+            {submitting ? "Salvando..." : "Salvar"}
+          </Text>
+        </Button>
+      </View>
+    </View>
   );
 }

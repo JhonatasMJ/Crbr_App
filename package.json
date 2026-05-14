@@ -12,6 +12,7 @@
   "dependencies": {
     "@expo-google-fonts/titillium-web": "^0.4.1",
     "@firebase/auth": "^1.13.0",
+    "@gorhom/bottom-sheet": "^5.2.14",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-async-storage/async-storage": "^3.0.2",
     "@react-navigation/drawer": "^7.9.8",

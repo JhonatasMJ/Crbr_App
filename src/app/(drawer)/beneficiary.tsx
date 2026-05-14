@@ -1,19 +1,18 @@
 import { BeneficiaryCard } from "@/components/BeneficiaryCard";
-import { ModalBeneficiary } from "@/components/ModalBeneficiary";
+import { BeneficiarySheetContent } from "@/components/BeneficiarySheetContent";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { useBottomSheetContext } from "@/context/bottomShet.context";
 import { useBeneficiary } from "@/context/beneficiary.context";
 import { Beneficiary as BeneficiaryType } from "@/types/beneficiary";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { FlatList, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Beneficiary() {
   const { beneficiary } = useBeneficiary();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingBeneficiary, setEditingBeneficiary] =
-    useState<BeneficiaryType | null>(null);
+  const { openBottomSheet } = useBottomSheetContext();
 
   const totalPercentage = useMemo(
     () =>
@@ -26,17 +25,28 @@ export default function Beneficiary() {
 
   const showAddBeneficiaryButton = totalPercentage < 100;
   const maxPercentageAdd = Math.max(0, 100 - totalPercentage);
-  const maxPercentageModal = editingBeneficiary
-    ? Math.max(
-        0,
-        100 - totalPercentage + (Number(editingBeneficiary.percentage) || 0),
-      )
-    : maxPercentageAdd;
 
-  function handleModalOpenChange(open: boolean) {
-    setFormOpen(open);
-    if (!open) setEditingBeneficiary(null);
-  }
+  const openBeneficiarySheet = useCallback(
+    (toEdit: BeneficiaryType | null) => {
+      const maxPercentage = toEdit
+        ? Math.max(
+            0,
+            100 -
+              totalPercentage +
+              (Number(toEdit.percentage) || 0),
+          )
+        : maxPercentageAdd;
+      openBottomSheet(
+        <BeneficiarySheetContent
+          key={toEdit?.id ?? "new"}
+          maxPercentage={maxPercentage}
+          beneficiaryToEdit={toEdit}
+        />,
+        1,
+      );
+    },
+    [maxPercentageAdd, openBottomSheet, totalPercentage],
+  );
 
   return (
     <View className="flex-1 bg-background">
@@ -66,12 +76,10 @@ export default function Beneficiary() {
                   cpf={item.cpf}
                   percentage={item.percentage}
                   onPress={() => {
-                    setEditingBeneficiary(item);
-                    setFormOpen(true);
+                    openBeneficiarySheet(item);
                   }}
                   onEditPress={() => {
-                    setEditingBeneficiary(item);
-                    setFormOpen(true);
+                    openBeneficiarySheet(item);
                   }}
                 />
               )}
@@ -98,8 +106,7 @@ export default function Beneficiary() {
               className="bg-primary"
               size="xl"
               onPress={() => {
-                setEditingBeneficiary(null);
-                setFormOpen(true);
+                openBeneficiarySheet(null);
               }}
             >
               <Text className="font-sans-bold text-lg text-black">
@@ -109,13 +116,6 @@ export default function Beneficiary() {
           </SafeAreaView>
         ) : null}
       </View>
-
-      <ModalBeneficiary
-        open={formOpen}
-        onOpenChange={handleModalOpenChange}
-        maxPercentage={maxPercentageModal}
-        beneficiaryToEdit={editingBeneficiary}
-      />
     </View>
   );
 }
