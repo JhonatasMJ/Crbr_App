@@ -1,5 +1,6 @@
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { getInvestmentProgressInfo } from "@/shared/utils/calculateInvestmentIncome";
+import { getInvestmentStatusLabel, isInvestmentActive } from "@/shared/constants/investmentStatus";
 import { Pressable, Text, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Progress } from "./ui/progress";
@@ -12,6 +13,7 @@ type InvestmentCardProps = {
   onPress?: () => void;
   name: string;
   amount: number;
+  status?: string;
   startDate: string;
   endDate: string;
   duration: string;
@@ -29,11 +31,19 @@ export function InvestmentCard({
   onPress,
   name,
   amount,
+  status,
   startDate,
   endDate,
   duration,
 }: InvestmentCardProps) {
-  const progress = getInvestmentProgressInfo({ startDate, endDate, duration });
+  const active = isInvestmentActive(status);
+  const statusLabel = getInvestmentStatusLabel(status);
+  const progress = getInvestmentProgressInfo({
+    startDate,
+    endDate,
+    duration,
+    status,
+  });
   const variant: InvestmentCardVariant = selected ? "selected" : "default";
   const style = INVESTMENT_CARD_STYLE[variant];
 
@@ -51,30 +61,45 @@ export function InvestmentCard({
       >
         <Pressable onPress={onPress}>
           <View className={`rounded-md p-4 ${style.containerBg}`}>
-          <Text className={`font-sans-semibold text-lg ${style.titleText}`}>
-            {name}
-          </Text>
-          <Text className={`font-sans-bold text-2xl ${style.amountText}`}>
-            {formatInvestmentAmount(amount)}
-          </Text>
-
-          {progress ? (
-            <View className="mt-3">
-              <View className="mb-2 flex-row items-center justify-between">
-                <Text className={`font-sans-medium text-sm ${style.helperText}`}>
-                  Dias Restantes
-                </Text>
-                <Text className={`font-sans-semibold text-sm ${style.remainingText}`}>
-                  {remainingLabel(progress.daysRemaining)}
-                </Text>
-              </View>
-              <Progress
-                value={progress.progressPercent}
-                indicatorClassName={style.progressIndicator}
-                className={style.progressTrack}
-              />
+            <View className="flex-row items-start justify-between gap-2">
+              <Text
+                className={`flex-1 font-sans-semibold text-lg ${style.titleText}`}
+              >
+                {name}
+              </Text>
+              <Text
+                className={`font-sans-semibold text-sm ${selected ? "text-secondary" : "text-primary"}`}
+              >
+                {statusLabel}
+              </Text>
             </View>
-          ) : null}
+            <Text className={`font-sans-bold text-2xl ${style.amountText}`}>
+              {formatInvestmentAmount(amount)}
+            </Text>
+
+            {!active ? (
+              <Text className={`mt-2 font-sans-medium text-sm ${style.helperText}`}>
+                Rendimento inicia quando o status for Ativo
+              </Text>
+            ) : null}
+
+            {progress ? (
+              <View className="mt-3">
+                <View className="mb-2 flex-row items-center justify-between">
+                  <Text className={`font-sans-medium text-sm ${style.helperText}`}>
+                    Dias Restantes
+                  </Text>
+                  <Text className={`font-sans-semibold text-sm ${style.remainingText}`}>
+                    {remainingLabel(progress.daysRemaining)}
+                  </Text>
+                </View>
+                <Progress
+                  value={progress.progressPercent}
+                  indicatorClassName={style.progressIndicator}
+                  className={style.progressTrack}
+                />
+              </View>
+            ) : null}
           </View>
         </Pressable>
       </Swipeable>

@@ -1,14 +1,20 @@
 export type InvestmentsParams = {
-    id?: string;
-    amount?: string;
-    investmentAmount?: string;
-    name: string;
-    investmentName?: string;
-    startDate: string;
-    endDate: string;
-    createdTime: string;
-    createdAt: string;
-    duration: string;
-    status: "ativo" | "inativo";
-    userId: string;
-}
+  id?: string;
+  amount?: string;
+  investmentAmount?: string;
+  name?: string;
+  investmentName?: string;
+  startDate: string;
+  endDate: string;
+  createdTime?: string;
+  createdAt?: number | string;
+  createdDate?: string;
+  duration: string;
+    status?: string;
+  userId?: string;
+  paymentMethod?: string;
+  pixNumber?: string;
+  historyEnabled?: boolean;
+  partialWithdrawalsCount?: number;
+  recused?: boolean;
+};

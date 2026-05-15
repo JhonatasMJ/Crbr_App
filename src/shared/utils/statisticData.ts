@@ -6,7 +6,7 @@ import {
 } from "lucide-react-native";
 import { InvestmentsParams } from "@/types/investmentsParams";
 import { formatInvestmentAmount } from "./formatInvestmentAmount";
-import { calculateInvestmentIncome } from "./calculateInvestmentIncome";
+import { getInvestmentIncome } from "./calculateInvestmentIncome";
 
 export type StatisticListItem = {
   id: string;
@@ -39,14 +39,7 @@ export function getHeaderStatisticItems(
     {
       id: "renda-atual",
       title: "Renda Atual",
-      value: formatInvestmentAmount(
-        calculateInvestmentIncome({
-          amount: investment.investmentAmount || investment.amount,
-          startDate: investment.startDate,
-          endDate: investment.endDate,
-          duration: investment.duration,
-        })
-      ),
+      value: formatInvestmentAmount(getInvestmentIncome(investment)),
       icon: BanknoteIcon,
     },
     {

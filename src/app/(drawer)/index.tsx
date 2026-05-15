@@ -60,8 +60,9 @@ export default function Home() {
               investmentId={item.id ?? ""}
               selected={selectedInvestment?.id === item.id}
               onPress={() => selectInvestment(item.id)}
-              name={card.name}
+              name={card.name ?? "Investimento"}
               amount={card.amount}
+              status={item.status}
               startDate={item.startDate}
               endDate={item.endDate}
               duration={item.duration}

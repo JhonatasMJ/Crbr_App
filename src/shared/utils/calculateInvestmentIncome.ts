@@ -1,4 +1,7 @@
 import type { InvestmentsParams } from "@/types/investmentsParams";
+import { isInvestmentActive } from "@/shared/constants/investmentStatus";
+import { isValid, parse } from "date-fns";
+import { BR_DATE_FORMAT } from "@/shared/utils/investmentDates";
 
 const TOTAL_INCOME_RATE = 0.1;
 
@@ -25,18 +28,22 @@ export function getInvestmentPrincipal(investment: InvestmentsParams): number {
   return parseAmount(investment.investmentAmount || investment.amount);
 }
 
-/** Principal + renda proporcional até hoje (mesma regra do header). */
-export function getInvestmentBalance(investment: InvestmentsParams): number {
+/** Renda proporcional — só quando o status é Ativo. */
+export function getInvestmentIncome(investment: InvestmentsParams): number {
+  if (!isInvestmentActive(investment.status)) return 0;
+
   const principal = getInvestmentPrincipal(investment);
-  return (
-    principal +
-    calculateInvestmentIncome({
-      amount: principal,
-      startDate: investment.startDate,
-      endDate: investment.endDate,
-      duration: investment.duration,
-    })
-  );
+  return calculateInvestmentIncome({
+    amount: principal,
+    startDate: investment.startDate,
+    endDate: investment.endDate,
+    duration: investment.duration,
+  });
+}
+
+/** Principal + renda (renda zerada se não estiver Ativo). */
+export function getInvestmentBalance(investment: InvestmentsParams): number {
+  return getInvestmentPrincipal(investment) + getInvestmentIncome(investment);
 }
 
 export function investmentToCardItem(investment: InvestmentsParams) {
@@ -51,17 +58,11 @@ function parseDate(value?: string): Date | null {
   if (!value) return null;
 
   const normalized = value.trim();
-  const ddmmyyyyMatch = normalized.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-
-  if (ddmmyyyyMatch) {
-    const [, day, month, year] = ddmmyyyyMatch;
-    const date = new Date(Number(year), Number(month) - 1, Number(day));
-
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
+  const parsed = parse(normalized, BR_DATE_FORMAT, new Date());
+  if (isValid(parsed)) return parsed;
 
   const fallbackDate = new Date(normalized);
-  return Number.isNaN(fallbackDate.getTime()) ? null : fallbackDate;
+  return isValid(fallbackDate) ? fallbackDate : null;
 }
 
 function getDurationMonths(duration?: string): number | null {
@@ -73,8 +74,8 @@ function getDurationMonths(duration?: string): number | null {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-  if (normalized.includes("trimestral") || normalized.includes("trismestral")) {
-    return 3;
+  if (normalized.includes("anual")) {
+    return 12;
   }
 
   if (/^4\s*mes(es)?$/.test(normalized) || normalized.includes("4 meses")) {
@@ -122,9 +123,11 @@ export type InvestmentProgressInfo = {
 };
 
 export function getInvestmentProgressInfo(
-  params: Pick<InvestmentsParams, "startDate" | "endDate" | "duration">,
+  params: Pick<InvestmentsParams, "startDate" | "endDate" | "duration" | "status">,
   today = new Date()
 ): InvestmentProgressInfo | null {
+  if (params.status != null && !isInvestmentActive(params.status)) return null;
+
   const period = resolveInvestmentPeriod(
     params.startDate,
     params.endDate,
@@ -156,11 +159,13 @@ export function compareInvestmentsByDaysRemaining(
     startDate: a.startDate,
     endDate: a.endDate,
     duration: a.duration,
+    status: a.status,
   });
   const pb = getInvestmentProgressInfo({
     startDate: b.startDate,
     endDate: b.endDate,
     duration: b.duration,
+    status: b.status,
   });
   const da = pa?.daysRemaining ?? Number.MAX_SAFE_INTEGER;
   const db = pb?.daysRemaining ?? Number.MAX_SAFE_INTEGER;

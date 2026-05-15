@@ -8,8 +8,12 @@ import {
 } from "react";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, onValue, remove } from "firebase/database";
+import { onValue, push, ref, remove, set } from "firebase/database";
+import type { InvestmentFormValues } from "@/shared/schemas/investments";
 import { auth, database } from "@/shared/services/firebase";
+import { formatAmountPlain } from "@/shared/utils/formatInvestmentAmount";
+import { INVESTMENT_STATUS } from "@/shared/constants/investmentStatus";
+import { formatBrDate, formatBrTime } from "@/shared/utils/investmentDates";
 import {
   compareInvestmentsByDaysRemaining,
   getInvestmentBalance,
@@ -29,6 +33,13 @@ type InvestmentsContextType = {
   handleToggleBalance: () => void;
   showData: boolean;
   deleteInvestment: (id: string) => void;
+  createInvestment: (
+    data: InvestmentFormValues & {
+      investmentAmount: number;
+      startDate: string;
+      endDate: string;
+    },
+  ) => Promise<void>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -147,6 +158,62 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function createInvestment(
+    data: InvestmentFormValues & {
+      investmentAmount: number;
+      startDate: string;
+      endDate: string;
+    },
+  ) {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error("Usuário não autenticado");
+
+    const now = new Date();
+    const amountPlain = formatAmountPlain(data.investmentAmount);
+
+    try {
+      const newRef = push(ref(database, `users/${uid}/investments`));
+      await set(newRef, {
+        amountHistory: [
+          {
+            amount: amountPlain,
+            createdAt: now.getTime(),
+            createdDate: formatBrDate(now),
+            createdTime: formatBrTime(now),
+            description: "Investimento inicial",
+            newAmount: amountPlain,
+            previousAmount: "0,00",
+            type: "Aporte",
+          },
+        ],
+        createdAt: now.getTime(),
+        createdDate: formatBrDate(now),
+        createdTime: formatBrTime(now),
+        duration: data.duration,
+        endDate: data.endDate,
+        historyEnabled: true,
+        investmentAmount: `R$ ${amountPlain}`,
+        investmentName: data.investmentName.trim(),
+        name: data.investmentName.trim(),
+        startDate: data.startDate,
+        partialWithdrawalsCount: 0,
+        paymentMethod: "Pix",
+        pixNumber: data.pixNumber.trim(),
+        recused: false,
+        reinvestments: [],
+        userId: uid,
+        status: INVESTMENT_STATUS.PENDING,
+      });
+    } catch (error) {
+      console.error(error);
+      notify({
+        message: "Erro ao criar investimento",
+        messageType: "ERROR",
+      });
+      throw error;
+    }
+  }
+
   return (
     <InvestmentsContext.Provider
       value={{
@@ -159,6 +226,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
         handleToggleBalance,
         showData,
         deleteInvestment,
+        createInvestment,
       }}
     >
       {children}
