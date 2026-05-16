@@ -71,7 +71,7 @@ export const BottomSheetProvider = ({ children }: { children: ReactNode }) => {
         index={index}
         enablePanDownToClose
         backgroundStyle={{
-          backgroundColor: "#111",
+          backgroundColor: "#000",
           borderTopLeftRadius: 32,
           borderTopRightRadius: 32,
           elevation: 9,
