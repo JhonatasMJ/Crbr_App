@@ -10,8 +10,10 @@ import {
 } from "@react-navigation/native";
 import Logo from "@/assets/logoSvg.svg";
 import Line from "@/assets/line.svg";
-import { Eye, EyeOff, Menu } from "lucide-react-native";
+import { Eye, EyeOff, Menu, Settings } from "lucide-react-native";
+import { router } from "expo-router";
 import { useInvestments } from "@/context/investments.context";
+import { useSnackBarContext } from "@/context/snackbar.context";
 import { getHeaderStatisticItems } from "@/shared/utils/statisticData";
 import { StatisticCard } from "./StatisticCard";
 import { Button } from "./ui/button";
@@ -19,8 +21,24 @@ import { Button } from "./ui/button";
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
+  const { notify } = useSnackBarContext();
   const { selectedInvestment, TotalBalance, allInvestments, handleToggleBalance, showData } =
     useInvestments();
+
+  function handleOpenManageInvestment() {
+    if (!selectedInvestment?.id) {
+      notify({
+        message: "Selecione um investimento para gerenciar",
+        messageType: "ERROR",
+      });
+      return;
+    }
+
+    router.push({
+      pathname: "/(drawer)/manage-investment",
+      params: { investmentId: selectedInvestment.id },
+    });
+  }
 
   function handleOpenDrawer() {
     let current = navigation as NavigationProp<ParamListBase>;
@@ -75,7 +93,14 @@ export function HomeHeader() {
               value={formatInvestmentAmount(TotalBalance)}
             />
           </View>
-          <View>
+          <View className="flex-row items-center gap-2">
+            <Button
+              size="icon"
+              className="bg-secondary"
+              onPress={handleOpenManageInvestment}
+            >
+              <Settings size={16} color="#fff" />
+            </Button>
             <Button
               size="icon"
               className="bg-secondary"

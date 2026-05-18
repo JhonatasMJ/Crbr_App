@@ -151,6 +151,13 @@ export default function DrawerLayout() {
           drawerItemStyle: { display: "none" },
         }}
       />
+
+      <Drawer.Screen
+        name="manage-investment"
+        options={{
+          drawerItemStyle: { display: "none" },
+        }}
+      />
     </Drawer>
   );
 }

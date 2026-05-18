@@ -8,11 +8,14 @@ import {
 } from "react";
 
 import { onAuthStateChanged } from "firebase/auth";
-import { onValue, push, ref, remove, set } from "firebase/database";
+import { get, onValue, push, ref, remove, set, update } from "firebase/database";
 import type { InvestmentFormValues } from "@/shared/schemas/investments";
 import { auth, database } from "@/shared/services/firebase";
 import { formatAmountPlain } from "@/shared/utils/formatInvestmentAmount";
-import { INVESTMENT_STATUS } from "@/shared/constants/investmentStatus";
+import {
+  INVESTMENT_STATUS,
+  isInvestmentActive,
+} from "@/shared/constants/investmentStatus";
 import { formatBrDate, formatBrTime } from "@/shared/utils/investmentDates";
 import {
   compareInvestmentsByDaysRemaining,
@@ -20,7 +23,13 @@ import {
   getInvestmentPrincipal,
 } from "@/shared/utils/calculateInvestmentIncome";
 import { InvestmentsParams } from "@/types/investmentsParams";
+import type { InvestmentAmountHistoryEntry } from "@/types/investmentAmountHistory";
+import type { InvestmentReinvestmentEntry } from "@/types/investmentAmountHistory";
 import type { InvestmentReceiptData } from "@/types/investmentReceipt";
+import {
+  canWithdrawInvestment,
+  getWithdrawBlockedMessage,
+} from "@/shared/utils/investmentOperations";
 import { useSnackBarContext } from "./snackbar.context";
 
 type InvestmentsContextType = {
@@ -44,6 +53,12 @@ type InvestmentsContextType = {
       investorEmail?: string;
     },
   ) => Promise<InvestmentReceiptData>;
+  withdrawInvestmentFull: (investmentId: string) => Promise<void>;
+  withdrawInvestmentPartial: (
+    investmentId: string,
+    amount: number,
+  ) => Promise<void>;
+  reinvestInInvestment: (investmentId: string, amount: number) => Promise<void>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -149,6 +164,192 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   function handleToggleBalance() {
     setShowData(!showData);
   }
+  function getUserInvestmentRef(investmentId: string) {
+    const uid = auth.currentUser?.uid;
+    if (!uid) throw new Error("Usuário não autenticado");
+    return ref(database, `users/${uid}/investments/${investmentId}`);
+  }
+
+  async function fetchUserInvestment(
+    investmentId: string,
+  ): Promise<InvestmentsParams> {
+    const snapshot = await get(getUserInvestmentRef(investmentId));
+    if (!snapshot.exists()) {
+      throw new Error("Investimento não encontrado");
+    }
+    return { id: investmentId, ...(snapshot.val() as Omit<InvestmentsParams, "id">) };
+  }
+
+  function buildAmountHistoryEntry(
+    type: string,
+    amount: number,
+    previousPlain: string,
+    newPlain: string,
+    description: string,
+  ): InvestmentAmountHistoryEntry {
+    const now = new Date();
+    const amountPlain = formatAmountPlain(amount);
+    return {
+      amount: amountPlain,
+      createdAt: now.getTime(),
+      createdDate: formatBrDate(now),
+      createdTime: formatBrTime(now),
+      description,
+      newAmount: newPlain,
+      previousAmount: previousPlain,
+      type,
+    };
+  }
+
+  function assertCanWithdraw(investment: InvestmentsParams) {
+    if (!canWithdrawInvestment(investment)) {
+      throw new Error(getWithdrawBlockedMessage(investment));
+    }
+  }
+
+  async function withdrawInvestmentFull(investmentId: string) {
+    try {
+      const investment = await fetchUserInvestment(investmentId);
+      assertCanWithdraw(investment);
+
+      const balance = getInvestmentBalance(investment);
+      const previousPlain = formatAmountPlain(getInvestmentPrincipal(investment));
+      const history = investment.amountHistory ?? [];
+
+      await update(getUserInvestmentRef(investmentId), {
+        investmentAmount: "R$ 0,00",
+        status: INVESTMENT_STATUS.INACTIVE,
+        amountHistory: [
+          ...history,
+          buildAmountHistoryEntry(
+            "Saque total",
+            balance,
+            previousPlain,
+            "0,00",
+            "Saque total do investimento",
+          ),
+        ],
+      });
+
+      notify({
+        message: "Saque total solicitado com sucesso",
+        messageType: "SUCCESS",
+      });
+    } catch (error) {
+      console.error(error);
+      notify({
+        message:
+          error instanceof Error ? error.message : "Erro ao sacar investimento",
+        messageType: "ERROR",
+      });
+      throw error;
+    }
+  }
+
+  async function withdrawInvestmentPartial(
+    investmentId: string,
+    amount: number,
+  ) {
+    try {
+      const investment = await fetchUserInvestment(investmentId);
+      assertCanWithdraw(investment);
+
+      const balance = getInvestmentBalance(investment);
+      if (amount > balance) {
+        throw new Error(
+          `Valor máximo para saque parcial é ${formatAmountPlain(balance)}`,
+        );
+      }
+
+      const previousPrincipal = getInvestmentPrincipal(investment);
+      const newPrincipal = Math.max(0, previousPrincipal - amount);
+      const previousPlain = formatAmountPlain(previousPrincipal);
+      const newPlain = formatAmountPlain(newPrincipal);
+      const history = investment.amountHistory ?? [];
+
+      await update(getUserInvestmentRef(investmentId), {
+        investmentAmount: `R$ ${newPlain}`,
+        partialWithdrawalsCount: (investment.partialWithdrawalsCount ?? 0) + 1,
+        amountHistory: [
+          ...history,
+          buildAmountHistoryEntry(
+            "Saque parcial",
+            amount,
+            previousPlain,
+            newPlain,
+            "Saque parcial do investimento",
+          ),
+        ],
+      });
+
+      notify({
+        message: "Saque parcial solicitado com sucesso",
+        messageType: "SUCCESS",
+      });
+    } catch (error) {
+      console.error(error);
+      notify({
+        message:
+          error instanceof Error ? error.message : "Erro ao sacar parcialmente",
+        messageType: "ERROR",
+      });
+      throw error;
+    }
+  }
+
+  async function reinvestInInvestment(investmentId: string, amount: number) {
+    try {
+      const investment = await fetchUserInvestment(investmentId);
+      if (!isInvestmentActive(investment.status)) {
+        throw new Error("O investimento precisa estar ativo para reinvestir.");
+      }
+      if (amount <= 0) {
+        throw new Error("Informe um valor válido para reinvestir.");
+      }
+
+      const previousPrincipal = getInvestmentPrincipal(investment);
+      const newPrincipal = previousPrincipal + amount;
+      const previousPlain = formatAmountPlain(previousPrincipal);
+      const newPlain = formatAmountPlain(newPrincipal);
+      const history = investment.amountHistory ?? [];
+      const now = new Date();
+      const reinvestment: InvestmentReinvestmentEntry = {
+        amount: formatAmountPlain(amount),
+        createdAt: now.getTime(),
+        createdDate: formatBrDate(now),
+        createdTime: formatBrTime(now),
+      };
+
+      await update(getUserInvestmentRef(investmentId), {
+        investmentAmount: `R$ ${newPlain}`,
+        reinvestments: [...(investment.reinvestments ?? []), reinvestment],
+        amountHistory: [
+          ...history,
+          buildAmountHistoryEntry(
+            "Reinvestimento",
+            amount,
+            previousPlain,
+            newPlain,
+            "Reinvestimento no investimento",
+          ),
+        ],
+      });
+
+      notify({
+        message: "Reinvestimento registrado com sucesso",
+        messageType: "SUCCESS",
+      });
+    } catch (error) {
+      console.error(error);
+      notify({
+        message:
+          error instanceof Error ? error.message : "Erro ao reinvestir",
+        messageType: "ERROR",
+      });
+      throw error;
+    }
+  }
+
   async function deleteInvestment(id: string) {
     try {
       await remove(ref(database, `users/${auth.currentUser?.uid}/investments/${id}`));
@@ -252,6 +453,9 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
         showData,
         deleteInvestment,
         createInvestment,
+        withdrawInvestmentFull,
+        withdrawInvestmentPartial,
+        reinvestInInvestment,
       }}
     >
       {children}

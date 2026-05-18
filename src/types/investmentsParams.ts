@@ -1,3 +1,8 @@
+import type {
+  InvestmentAmountHistoryEntry,
+  InvestmentReinvestmentEntry,
+} from "./investmentAmountHistory";
+
 export type InvestmentsParams = {
   id?: string;
   amount?: string;
@@ -10,11 +15,13 @@ export type InvestmentsParams = {
   createdAt?: number | string;
   createdDate?: string;
   duration: string;
-    status?: string;
+  status?: string;
   userId?: string;
   paymentMethod?: string;
   pixNumber?: string;
   historyEnabled?: boolean;
   partialWithdrawalsCount?: number;
   recused?: boolean;
+  amountHistory?: InvestmentAmountHistoryEntry[];
+  reinvestments?: InvestmentReinvestmentEntry[];
 };
