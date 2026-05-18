@@ -16,7 +16,9 @@ import {
 } from "@/shared/schemas/investments";
 import { formatBrDate, getEndDate } from "@/shared/utils/investmentDates";
 import { useInvestments } from "@/context/investments.context";
+import { useAuth } from "@/context/auth.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
+import { serializeInvestmentReceipt } from "@/shared/utils/parseInvestmentReceiptParams";
 import { useRouter } from "expo-router";
 import type { Resolver } from "react-hook-form";
 
@@ -29,6 +31,7 @@ const defaultFormValues: InvestmentFormValues = {
 
 export function InvestmentsForm() {
   const { createInvestment } = useInvestments();
+  const { user } = useAuth();
   const { notify } = useSnackBarContext();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -79,22 +82,24 @@ export function InvestmentsForm() {
 
     try {
       setSubmitting(true);
-      await createInvestment({
+      const receipt = await createInvestment({
         investmentName: confirmSummary.investmentName,
         investmentAmount: confirmSummary.investmentAmount,
         duration: confirmSummary.duration as InvestmentFormValues["duration"],
+        durationLabel: confirmSummary.durationLabel,
         pixNumber: confirmSummary.pixNumber,
         startDate: confirmSummary.startDate,
         endDate: confirmSummary.endDate,
+        investorName: user?.displayName ?? undefined,
+        investorEmail: user?.email ?? undefined,
       });
       setConfirmOpen(false);
       setConfirmSummary(null);
       clearForm();
-      notify({
-        message: "Investimento criado com sucesso",
-        messageType: "SUCCESS",
+      router.replace({
+        pathname: "/(drawer)/investment-receipt",
+        params: { data: serializeInvestmentReceipt(receipt) },
       });
-      router.back();
     } catch (error) {
       console.error(error);
     } finally {

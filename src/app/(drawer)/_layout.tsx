@@ -144,6 +144,13 @@ export default function DrawerLayout() {
           ),
         }}
       />
+
+      <Drawer.Screen
+        name="investment-receipt"
+        options={{
+          drawerItemStyle: { display: "none" },
+        }}
+      />
     </Drawer>
   );
 }

@@ -20,6 +20,7 @@ import {
   getInvestmentPrincipal,
 } from "@/shared/utils/calculateInvestmentIncome";
 import { InvestmentsParams } from "@/types/investmentsParams";
+import type { InvestmentReceiptData } from "@/types/investmentReceipt";
 import { useSnackBarContext } from "./snackbar.context";
 
 type InvestmentsContextType = {
@@ -38,8 +39,11 @@ type InvestmentsContextType = {
       investmentAmount: number;
       startDate: string;
       endDate: string;
+      durationLabel: string;
+      investorName?: string;
+      investorEmail?: string;
     },
-  ) => Promise<void>;
+  ) => Promise<InvestmentReceiptData>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -163,13 +167,18 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
       investmentAmount: number;
       startDate: string;
       endDate: string;
+      durationLabel: string;
+      investorName?: string;
+      investorEmail?: string;
     },
-  ) {
+  ): Promise<InvestmentReceiptData> {
     const uid = auth.currentUser?.uid;
     if (!uid) throw new Error("Usuário não autenticado");
 
     const now = new Date();
     const amountPlain = formatAmountPlain(data.investmentAmount);
+    const createdDate = formatBrDate(now);
+    const createdTime = formatBrTime(now);
 
     try {
       const newRef = push(ref(database, `users/${uid}/investments`));
@@ -178,8 +187,8 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
           {
             amount: amountPlain,
             createdAt: now.getTime(),
-            createdDate: formatBrDate(now),
-            createdTime: formatBrTime(now),
+            createdDate,
+            createdTime,
             description: "Investimento inicial",
             newAmount: amountPlain,
             previousAmount: "0,00",
@@ -187,8 +196,8 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
           },
         ],
         createdAt: now.getTime(),
-        createdDate: formatBrDate(now),
-        createdTime: formatBrTime(now),
+        createdDate,
+        createdTime,
         duration: data.duration,
         endDate: data.endDate,
         historyEnabled: true,
@@ -204,6 +213,22 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
         userId: uid,
         status: INVESTMENT_STATUS.PENDING,
       });
+
+      return {
+        investmentId: newRef.key!,
+        investmentName: data.investmentName.trim(),
+        investmentAmount: data.investmentAmount,
+        durationLabel: data.durationLabel,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        pixNumber: data.pixNumber.trim(),
+        status: INVESTMENT_STATUS.PENDING,
+        paymentMethod: "Pix",
+        createdDate,
+        createdTime,
+        investorName: data.investorName,
+        investorEmail: data.investorEmail,
+      };
     } catch (error) {
       console.error(error);
       notify({
