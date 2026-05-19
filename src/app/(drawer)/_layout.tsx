@@ -46,6 +46,7 @@ export default function DrawerLayout() {
 
   return (
     <Drawer
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         drawerStyle: {
@@ -106,11 +107,6 @@ export default function DrawerLayout() {
         </View>
       )}
     >
-      <Drawer.Screen
-        name="admin"
-        options={hiddenDrawerItem}
-      />
-
       <Drawer.Screen
         name="index"
         options={{

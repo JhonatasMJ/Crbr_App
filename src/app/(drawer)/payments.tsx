@@ -41,6 +41,7 @@ export default function Payments() {
         logo={false}
         span="Chave pix para saque e investimentos"
         title="Pagamentos"
+        backHref="/(drawer)"
       />
       <View className="gap-12 px-6 pt-4 mt-4">
         <View>

@@ -48,7 +48,13 @@ export default function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [welcomeReady, setWelcomeReady] = useState(false);
   const insets = useSafeAreaInsets();
-  const { user, userProfile, initializing, getRememberedLogin } = useAuth();
+  const {
+    user,
+    userProfile,
+    initializing,
+    getRememberedLogin,
+    tryBiometricRememberedLogin,
+  } = useAuth();
 
   useEffect(() => {
     if (initializing) return;
@@ -65,7 +71,13 @@ export default function Index() {
         const remembered = await getRememberedLogin();
         if (cancelled) return;
         if (remembered) {
-          router.replace("/(auth)/login");
+          const loggedInWithBiometric = await tryBiometricRememberedLogin();
+          if (cancelled) return;
+          if (loggedInWithBiometric) return;
+          router.replace({
+            pathname: "/(auth)/login",
+            params: { skipBiometric: "1" },
+          });
           return;
         }
       } catch (e) {
@@ -77,7 +89,13 @@ export default function Index() {
     return () => {
       cancelled = true;
     };
-  }, [initializing, user, userProfile?.email, getRememberedLogin]);
+  }, [
+    initializing,
+    user,
+    userProfile?.email,
+    getRememberedLogin,
+    tryBiometricRememberedLogin,
+  ]);
 
   const { paginationOverlayTop, slideTopPadding } = useMemo(() => {
     const paginationTopSpacing = 12;

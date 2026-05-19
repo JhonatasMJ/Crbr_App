@@ -5,7 +5,12 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 export default function Investments() {
   return (
     <View className="flex-1 bg-background">
-      <Header logo={false} span="Crie seu investimento" title="Investir" />
+      <Header
+        logo={false}
+        span="Crie seu investimento"
+        title="Investir"
+        backHref="/(drawer)"
+      />
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}

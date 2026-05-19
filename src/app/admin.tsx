@@ -1,1 +1,1 @@
-export { default } from "./(drawer)/admin";
+export { default } from "@/screens/AdminScreen";

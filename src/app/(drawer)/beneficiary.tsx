@@ -54,6 +54,7 @@ export default function Beneficiary() {
         logo={false}
         span="Visualize e edite seus beneficiários"
         title="Beneficiários"
+        backHref="/(drawer)"
       />
       <View className="mt-4 flex-1 px-6 pt-4">
         {beneficiary.length > 0 && (

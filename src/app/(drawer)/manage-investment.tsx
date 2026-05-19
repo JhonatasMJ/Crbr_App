@@ -42,6 +42,7 @@ export default function ManageInvestmentScreen() {
         logo={false}
         span="Gerencie sua cota selecionada"
         title="Investimento"
+        backHref="/(drawer)"
       />
       <ManageInvestmentContent investment={investment} />
     </View>

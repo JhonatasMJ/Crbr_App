@@ -25,6 +25,7 @@ import * as SecureStore from "expo-secure-store";
 import { LoginParams } from "@/types/loginParams";
 import { useSnackBarContext } from "./snackbar.context";
 import type { UserProfile, UserUpdatePayload } from "@/types/user";
+import { authenticateWithBiometric } from "@/shared/utils/biometricAuth";
 
 const REMEMBERED_LOGIN_SECURE_KEY = "crbr_remembered_login";
 
@@ -79,6 +80,7 @@ type AuthContextType = {
   isAdmin: boolean;
   login: (data: LoginParams) => Promise<void>;
   loginWithRemember: (data: LoginParams, remember: boolean) => Promise<void>;
+  tryBiometricRememberedLogin: () => Promise<boolean>;
   getRememberedLogin: () => Promise<RememberedLogin | null>;
   clearRememberedLogin: () => Promise<void>;
   logout: () => Promise<void>;
@@ -189,6 +191,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function tryBiometricRememberedLogin(): Promise<boolean> {
+    const remembered = await getRememberedLogin();
+    if (!remembered) return false;
+
+    const authenticated = await authenticateWithBiometric();
+    if (!authenticated) return false;
+
+    try {
+      await login(remembered);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function updateUser(data: UserUpdatePayload) {
     try {
       setLoading(true);
@@ -276,6 +293,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         login,
         loginWithRemember,
+        tryBiometricRememberedLogin,
         getRememberedLogin,
         clearRememberedLogin,
         logout,

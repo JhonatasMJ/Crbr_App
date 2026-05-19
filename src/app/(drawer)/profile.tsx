@@ -9,6 +9,7 @@ export default function Profile() {
         logo={false}
         span="Visualize e edite seus dados"
         title="Perfil"
+        backHref="/(drawer)"
       />
       <View className="gap-12 px-6 pt-4 mt-4">
         <UpdateUserForm />
