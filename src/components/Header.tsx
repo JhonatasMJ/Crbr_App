@@ -27,7 +27,7 @@ export function Header({ span, title, logo = true, backHref }: HeaderProps) {
       >
         <View className="relative min-h-10 flex-row items-center justify-center">
           <View className="absolute left-0 z-10">
-            <Button onPress={handleBack} size="icon" className="bg-secondary">
+            <Button onPress={handleBack} size="icon" variant="secondary">
               <ChevronLeft size={20} color="#fff" />
             </Button>
           </View>

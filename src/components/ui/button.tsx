@@ -95,10 +95,23 @@ type ButtonProps = React.ComponentProps<typeof Pressable> &
   VariantProps<typeof buttonVariants>;
 
 function Button({ className, variant, size, ...props }: ButtonProps) {
+  const usesSecondaryBg =
+    !variant &&
+    typeof className === "string" &&
+    /\bbg-secondary\b/.test(className);
+
+  const resolvedVariant = usesSecondaryBg ? "secondary" : variant;
+
   return (
-    <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
+    <TextClassContext.Provider
+      value={buttonTextVariants({ variant: resolvedVariant, size })}
+    >
       <Pressable
-        className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
+        className={cn(
+          props.disabled && "opacity-50",
+          buttonVariants({ variant: resolvedVariant, size }),
+          className,
+        )}
         role="button"
         {...props}
       />

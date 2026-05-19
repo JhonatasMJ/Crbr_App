@@ -405,7 +405,7 @@ export default function AdminScreen() {
         {activeTab === "goals" && renderGoals()}
 
         <View className="mb-16 mt-12">
-          <Button className="bg-secondary" size="xl" onPress={handleSignOut}>
+          <Button variant="secondary" size="xl" onPress={handleSignOut}>
             <View className="flex-row items-center gap-2">
               <LogOut size={20} color="#fff" />
               <Text className="text-lg font-bold text-white">Sair da conta</Text>

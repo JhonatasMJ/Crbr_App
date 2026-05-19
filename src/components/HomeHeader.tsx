@@ -13,6 +13,7 @@ import Line from "@/assets/line.svg";
 import { Eye, EyeOff, History, Menu, Settings } from "lucide-react-native";
 import { router } from "expo-router";
 import { useInvestments } from "@/context/investments.context";
+import { useSnackBarContext } from "@/context/snackbar.context";
 import { getHeaderStatisticItems } from "@/shared/utils/statisticData";
 import { StatisticCard } from "./StatisticCard";
 import { Button } from "./ui/button";
@@ -20,6 +21,7 @@ import { Button } from "./ui/button";
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
+  const { notify } = useSnackBarContext();
   const { selectedInvestment, TotalBalance, allInvestments, handleToggleBalance, showData } =
     useInvestments();
 
@@ -103,21 +105,21 @@ export function HomeHeader() {
           <View className="flex-row items-center gap-2">
             <Button
               size="icon"
-              className="bg-secondary"
+              variant="secondary"
               onPress={handleOpenInvestmentHistory}
             >
               <History size={16} color="#fff" />
             </Button>
             <Button
               size="icon"
-              className="bg-secondary"
+              variant="secondary"
               onPress={handleOpenManageInvestment}
             >
               <Settings size={16} color="#fff" />
             </Button>
             <Button
               size="icon"
-              className="bg-secondary"
+              variant="secondary"
               onPress={handleToggleBalance}
             >
               {showData ? (
