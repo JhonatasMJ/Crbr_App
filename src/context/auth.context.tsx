@@ -4,8 +4,11 @@ import {
   ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
+import { router } from "expo-router";
+import { resolveIsAdmin } from "@/shared/constants/admin";
 
 import {
   createUserWithEmailAndPassword,
@@ -73,6 +76,7 @@ type AuthContextType = {
   initializing: boolean;
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
+  isAdmin: boolean;
   login: (data: LoginParams) => Promise<void>;
   loginWithRemember: (data: LoginParams, remember: boolean) => Promise<void>;
   getRememberedLogin: () => Promise<RememberedLogin | null>;
@@ -90,6 +94,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { notify } = useSnackBarContext();
+
+  const isAdmin = useMemo(
+    () => resolveIsAdmin(user?.email, userProfile?.email),
+    [user?.email, userProfile?.email],
+  );
 
   /* Faz Login automatico */
   useEffect(() => {
@@ -207,9 +216,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /* Faz Logout */
   async function logout() {
     try {
-      await clearRememberedLogin();
       setLoading(true);
+      await clearRememberedLogin();
       await signOut(auth);
+      setUser(null);
+      setUserProfile(null);
+      router.replace("/(auth)/login");
     } catch (error) {
       console.error(error);
       throw error;
@@ -261,6 +273,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         initializing,
         user,
         userProfile,
+        isAdmin,
         login,
         loginWithRemember,
         getRememberedLogin,

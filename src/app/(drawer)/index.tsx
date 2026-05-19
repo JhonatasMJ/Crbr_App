@@ -1,4 +1,8 @@
+import { useEffect } from "react";
 import { FlatList, View } from "react-native";
+import { router, type Href } from "expo-router";
+import { useAuth } from "@/context/auth.context";
+import { isAdminEmail } from "@/shared/constants/admin";
 import { HomeHeader } from "@/components/HomeHeader";
 import { ServiceCard } from "@/components/ServiceCard";
 import { InvestmentCard } from "@/components/InvestmentCard";
@@ -38,8 +42,15 @@ function InvestmentRowSeparator() {
 }
 
 export default function Home() {
+  const { user } = useAuth();
   const { investments, selectedInvestment, selectInvestment, loading } =
     useInvestments();
+
+  useEffect(() => {
+    if (isAdminEmail(user?.email)) {
+      router.replace("/admin" as Href);
+    }
+  }, [user?.email]);
 
   if (loading) {
     return <DataLoading />;

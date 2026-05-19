@@ -12,8 +12,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
 import { colors } from "@/themes/colors";
-import { Link, router, type Href } from "expo-router";
+import { Link, router } from "expo-router";
 import { useAuth } from "@/context/auth.context";
+import { getPostLoginHref } from "@/shared/utils/authRouting";
 const { width, height } = Dimensions.get("window");
 
 type DataProps = {
@@ -47,13 +48,13 @@ export default function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [welcomeReady, setWelcomeReady] = useState(false);
   const insets = useSafeAreaInsets();
-  const { user, initializing, getRememberedLogin } = useAuth();
+  const { user, userProfile, initializing, getRememberedLogin } = useAuth();
 
   useEffect(() => {
     if (initializing) return;
 
     if (user) {
-      router.replace("/(drawer)" as Href);
+      router.replace(getPostLoginHref(user.email, userProfile?.email));
       return;
     }
 
@@ -76,7 +77,7 @@ export default function Index() {
     return () => {
       cancelled = true;
     };
-  }, [initializing, user, getRememberedLogin]);
+  }, [initializing, user, userProfile?.email, getRememberedLogin]);
 
   const { paginationOverlayTop, slideTopPadding } = useMemo(() => {
     const paginationTopSpacing = 12;

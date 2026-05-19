@@ -1,8 +1,9 @@
+import { useEffect } from "react";
 import { Drawer } from "expo-router/drawer";
 import {
   CreditCard,
   DollarSign,
-  User,
+  User as UserIcon,
   Users,
   LogOut,
   Home,
@@ -16,7 +17,7 @@ import { useAuth } from "@/context/auth.context";
 import Line from "@/assets/whiteLine.svg";
 import { formatName } from "@/shared/utils/formatName";
 import { Modal } from "@/components/Modal";
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/themes/colors";
 
@@ -24,13 +25,23 @@ function drawerIconColor(focused: boolean) {
   return focused ? "#000000" : colors.primary;
 }
 
+const hiddenDrawerItem = { drawerItemStyle: { display: "none" as const } };
+
 export default function DrawerLayout() {
-  const { user, logout } = useAuth();
+  const { user: authUser, isAdmin, logout } = useAuth();
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    router.replace("/admin" as Href);
+  }, [isAdmin]);
 
   async function handleLogout() {
     await logout();
-    router.replace("/login");
+  }
+
+  if (isAdmin) {
+    return <View className="flex-1 bg-background" />;
   }
 
   return (
@@ -64,10 +75,10 @@ export default function DrawerLayout() {
           <View className="flex-1 mt-24">
             <View className="p-5 px-7">
               <Text className="text-white font-sans-semibold text-xl">
-                {formatName(user?.displayName || "")}
+                {formatName(authUser?.displayName || "")}
               </Text>
               <Text className="text-primary font-sans-semibold text-sm">
-                {user?.email}
+                {authUser?.email}
               </Text>
             </View>
 
@@ -96,6 +107,11 @@ export default function DrawerLayout() {
       )}
     >
       <Drawer.Screen
+        name="admin"
+        options={hiddenDrawerItem}
+      />
+
+      <Drawer.Screen
         name="index"
         options={{
           title: "Início",
@@ -120,7 +136,7 @@ export default function DrawerLayout() {
         options={{
           title: "Perfil",
           drawerIcon: ({ focused, size }) => (
-            <User size={size} color={drawerIconColor(focused)} />
+            <UserIcon size={size} color={drawerIconColor(focused)} />
           ),
         }}
       />
@@ -147,16 +163,12 @@ export default function DrawerLayout() {
 
       <Drawer.Screen
         name="investment-receipt"
-        options={{
-          drawerItemStyle: { display: "none" },
-        }}
+        options={hiddenDrawerItem}
       />
 
       <Drawer.Screen
         name="manage-investment"
-        options={{
-          drawerItemStyle: { display: "none" },
-        }}
+        options={hiddenDrawerItem}
       />
     </Drawer>
   );

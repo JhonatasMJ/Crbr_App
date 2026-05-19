@@ -1,7 +1,8 @@
 import { InputLabel } from "@/components/InputLabel";
 import { InputPassword } from "@/components/InputPassword";
 import { Button } from "@/components/ui/button";
-import { Link, router, type Href } from "expo-router";
+import { Link, router } from "expo-router";
+import { getPostLoginHref } from "@/shared/utils/authRouting";
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +33,7 @@ export function LoginForm() {
     clearRememberedLogin,
     loading,
     user,
+    userProfile,
   } = useAuth();
 
   useEffect(() => {
@@ -53,14 +55,14 @@ export function LoginForm() {
 
   useEffect(() => {
     if (user) {
-      router.replace("/(drawer)" as Href);
+      router.replace(getPostLoginHref(user.email, userProfile?.email));
     }
-  }, [user]);
+  }, [user, userProfile?.email]);
 
   async function handleLogin(data: LoginParams) {
     try {
       await loginWithRemember(data, remember);
-      router.replace("/(drawer)" as Href);
+      router.replace(getPostLoginHref(data.email));
     } catch {}
   }
 

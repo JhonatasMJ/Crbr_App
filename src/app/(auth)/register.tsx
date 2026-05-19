@@ -12,7 +12,8 @@ import { registerFullSchema } from "@/shared/schemas/registerFullSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useAuth } from "@/context/auth.context";
 import { ActivityIndicator } from "react-native";
-import { router, type Href } from "expo-router";
+import { router } from "expo-router";
+import { getPostLoginHref } from "@/shared/utils/authRouting";
 const steps = ["account", "contact", "password"] as const;
 
 const STEP_ORDER: Record<(typeof steps)[number], number> = {
@@ -90,7 +91,7 @@ export default function Register() {
   /* Redireciona para a tela de login se o usuário estiver logado */
   useEffect(() => {
     if (user) {
-      router.replace("/(drawer)" as Href);
+      router.replace(getPostLoginHref(user.email));
     }
   }, [user]);
 

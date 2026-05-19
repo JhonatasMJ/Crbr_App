@@ -17,7 +17,7 @@ interface ModalProps {
   title?: string;
   trigger?: ReactNode;
   onCancel?: () => void;
-  onConfirm?: () => void;
+  onConfirm?: () => void | Promise<void>;
 }
 
 export function Modal({
@@ -49,7 +49,10 @@ export function Modal({
             </Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button className="h-11 flex-1 bg-primary" onPress={onConfirm}>
+            <Button
+              className="h-11 flex-1 bg-primary"
+              onPress={() => void onConfirm?.()}
+            >
               <Text className="text-center text-black font-sans-semibold">
                 Confirmar
               </Text>
