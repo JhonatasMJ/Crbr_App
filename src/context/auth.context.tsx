@@ -79,7 +79,7 @@ type AuthContextType = {
   clearRememberedLogin: () => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: UserUpdatePayload) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<string>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -218,16 +218,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  async function resetPassword(email: string) {
+  async function resetPassword(email: string): Promise<string> {
+    const normalizedEmail = email.trim();
+
     try {
       setLoading(true);
-      await sendPasswordResetEmail(auth, email);
-      notify({
-        message: `Link enviado com sucesso`,
-        messageType: "SUCCESS",
-      });
-    } catch (error) {
+      await sendPasswordResetEmail(auth, normalizedEmail);
+      return normalizedEmail;
+    } catch (error: unknown) {
       console.error(error);
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? String((error as { code: string }).code)
+          : "";
+
+      if (code === "auth/invalid-email") {
+        notify({ message: "E-mail inválido.", messageType: "ERROR" });
+      } else if (code === "auth/too-many-requests") {
+        notify({
+          message: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+          messageType: "ERROR",
+        });
+      } else {
+        notify({
+          message: "Não foi possível enviar o e-mail. Tente novamente.",
+          messageType: "ERROR",
+        });
+      }
+
       throw error;
     } finally {
       setLoading(false);
