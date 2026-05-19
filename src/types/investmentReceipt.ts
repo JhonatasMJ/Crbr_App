@@ -1,3 +1,5 @@
+export type InvestmentReceiptKind = "investment" | "request";
+
 export type InvestmentReceiptData = {
   investmentId: string;
   investmentName: string;
@@ -12,4 +14,8 @@ export type InvestmentReceiptData = {
   createdTime: string;
   investorName?: string;
   investorEmail?: string;
+  /** Padrão: comprovante de investimento. */
+  receiptKind?: InvestmentReceiptKind;
+  /** Ex.: Saque total, Saque de rendimento, Reinvestimento */
+  operationLabel?: string;
 };

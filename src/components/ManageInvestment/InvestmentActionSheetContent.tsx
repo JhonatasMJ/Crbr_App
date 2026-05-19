@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { View } from "react-native";
+import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useBottomSheetContext } from "@/context/bottomShet.context";
 import { useInvestments } from "@/context/investments.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
+import { serializeInvestmentReceipt } from "@/shared/utils/parseInvestmentReceiptParams";
 import {
   getInvestmentBalance,
   getInvestmentPrincipal,
@@ -18,6 +20,7 @@ import {
   getInvestmentEarnings,
   getPartialWithdrawBlockedMessage,
   getReinvestBlockedMessage,
+  getReinvestRequestAmount,
   getWithdrawBlockedMessage,
   isInvestmentMatured,
 } from "@/shared/utils/investmentOperations";
@@ -36,21 +39,21 @@ const ACTION_COPY: Record<
 > = {
   "withdraw-full": {
     title: "Sacar total",
-    confirmLabel: "Confirmar saque total",
+    confirmLabel: "Confirmar solicitação",
     description:
-      "Resgata o valor disponível: antes do vencimento, apenas o principal; após o vencimento, principal + rendimento.",
+      "Sua solicitação será analisada. Antes do vencimento, resgata apenas o principal; após o vencimento, principal + rendimento.",
   },
   "withdraw-partial": {
     title: "Sacar rendimento",
-    confirmLabel: "Confirmar saque do rendimento",
+    confirmLabel: "Confirmar solicitação",
     description:
-      "Resgata apenas o rendimento acumulado. O principal permanece e o investimento recomeça por mais 4 meses.",
+      "Solicita o resgate do rendimento acumulado. Após aprovação, o principal permanece e o ciclo recomeça.",
   },
   reinvest: {
     title: "Reinvestir",
-    confirmLabel: "Confirmar reinvestimento",
+    confirmLabel: "Confirmar solicitação",
     description:
-      "O rendimento é incorporado ao principal e o investimento recomeça por mais 4 meses a partir de hoje.",
+      "Solicita incorporar o rendimento ao principal. Após aprovação, o investimento recomeça por mais 4 meses.",
   },
 };
 
@@ -58,6 +61,7 @@ export function InvestmentActionSheetContent({
   investment,
   action,
 }: InvestmentActionSheetContentProps) {
+  const router = useRouter();
   const {
     withdrawInvestmentFull,
     withdrawInvestmentPartial,
@@ -78,7 +82,7 @@ export function InvestmentActionSheetContent({
       ? getFullWithdrawMaxAmount(investment)
       : action === "withdraw-partial"
         ? earnings
-        : balance;
+        : getReinvestRequestAmount(investment);
 
   const canConfirm =
     action === "withdraw-full"
@@ -105,15 +109,20 @@ export function InvestmentActionSheetContent({
         return;
       }
 
+      let receipt;
       if (action === "withdraw-full") {
-        await withdrawInvestmentFull(investment.id);
+        receipt = await withdrawInvestmentFull(investment.id);
       } else if (action === "withdraw-partial") {
-        await withdrawInvestmentPartial(investment.id);
+        receipt = await withdrawInvestmentPartial(investment.id);
       } else {
-        await reinvestInInvestment(investment.id);
+        receipt = await reinvestInInvestment(investment.id);
       }
 
       closeBottomSheet();
+      router.push({
+        pathname: "/(drawer)/investment-receipt",
+        params: { data: serializeInvestmentReceipt(receipt) },
+      });
     } catch {
       /* notify no context */
     } finally {
@@ -161,7 +170,7 @@ export function InvestmentActionSheetContent({
 
         <View className="mt-3 flex-row justify-between border-t border-zinc-800 pt-3">
           <Text className="font-sans-semibold text-sm text-zinc-400">
-            Valor desta operação
+            Valor da solicitação
           </Text>
           <Text className="font-sans-bold text-base text-primary">
             {formatInvestmentAmount(actionAmount)}

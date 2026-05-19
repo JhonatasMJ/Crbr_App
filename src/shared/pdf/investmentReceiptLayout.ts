@@ -23,14 +23,20 @@ const MONTH_LABELS = [
   "DEZ",
 ] as const;
 
-export function buildInvestmentReceiptFileName(personName?: string): string {
+export function buildInvestmentReceiptFileName(
+  personName?: string,
+  receiptKind: InvestmentReceiptData["receiptKind"] = "investment",
+): string {
   const name = personName?.trim() || "Investidor";
   const safeName = name
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-  return `Compro. Investimento - ${safeName || "Investidor"}.pdf`;
+  const prefix =
+    receiptKind === "request" ? "Compro. Solicitação" : "Compro. Investimento";
+
+  return `${prefix} - ${safeName || "Investidor"}.pdf`;
 }
 
 export function formatReceiptTimestamp(
@@ -47,13 +53,17 @@ export function buildInvestmentReceiptLayout(receipt: InvestmentReceiptData) {
   const pixDisplay = receipt.pixNumber.trim() || "—";
   const investor = receipt.investorName?.trim() || "—";
   const investorEmail = receipt.investorEmail?.trim() || "—";
+  const isRequest = receipt.receiptKind === "request";
+  const operationLabel = receipt.operationLabel?.trim() || "Investimento";
 
   return {
-    title: "Comprovante de investimento",
+    title: isRequest
+      ? "Comprovante de solicitação"
+      : "Comprovante de investimento",
     timestamp: formatReceiptTimestamp(receipt.createdDate, receipt.createdTime),
     headerRows: [
       { label: "Valor", value: formatInvestmentAmount(receipt.investmentAmount) },
-      { label: "Tipo de operação", value: "Investimento" },
+      { label: "Tipo de operação", value: operationLabel },
       { label: "Status", value: receipt.status },
     ] satisfies ReceiptRowData[],
     sections: [

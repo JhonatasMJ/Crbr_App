@@ -1,5 +1,6 @@
 import {
   BanknoteIcon,
+  Calendar,
   CalendarDays,
   ChartNoAxesCombined,
   LucideIcon,
@@ -25,6 +26,7 @@ export function getHeaderStatisticItems(
       { id: "investido", title: "Investido", value: empty, icon: BanknoteIcon },
       { id: "Renda Atual", title: "Renda Atual", value: empty, icon: BanknoteIcon },
       { id: "tipo", title: "Tipo", value: empty, icon: ChartNoAxesCombined },
+      { id: "inicio", title: "Início", value: empty, icon: Calendar },
       { id: "vencimento", title: "Vencimento", value: empty, icon: CalendarDays },
     ];
   }
@@ -47,6 +49,12 @@ export function getHeaderStatisticItems(
       title: "Tipo",
       value: investment.duration?.trim() || empty,
       icon: ChartNoAxesCombined,
+    },
+    {
+      id: "inicio",
+      title: "Início",
+      value: investment.startDate?.trim() || empty,
+      icon: Calendar,
     },
     {
       id: "vencimento",

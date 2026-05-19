@@ -1,5 +1,8 @@
 import type { InvestmentsParams } from "@/types/investmentsParams";
-import { isInvestmentActive } from "@/shared/constants/investmentStatus";
+import {
+  isInvestmentActive,
+  isInvestmentWaiting,
+} from "@/shared/constants/investmentStatus";
 import {
   formatBrDate,
   getEndDate,
@@ -47,16 +50,31 @@ export function getFullWithdrawMaxAmount(investment: InvestmentsParams): number 
   return getInvestmentPrincipal(investment);
 }
 
+function hasPendingRequest(investment: InvestmentsParams): boolean {
+  return (
+    isInvestmentWaiting(investment.status) || Boolean(investment.pendingAction)
+  );
+}
+
 export function canPerformFullWithdraw(investment: InvestmentsParams): boolean {
+  if (hasPendingRequest(investment)) return false;
   return isInvestmentActive(investment.status) && getFullWithdrawMaxAmount(investment) > 0;
 }
 
 export function canPerformPartialWithdraw(investment: InvestmentsParams): boolean {
+  if (hasPendingRequest(investment)) return false;
   return isInvestmentMatured(investment) && getInvestmentEarnings(investment) > 0;
 }
 
+export function getReinvestRequestAmount(investment: InvestmentsParams): number {
+  return getInvestmentBalance(investment);
+}
+
 export function canReinvestInvestment(investment: InvestmentsParams): boolean {
-  return isInvestmentMatured(investment) && getInvestmentBalance(investment) > 0;
+  if (hasPendingRequest(investment)) return false;
+  return (
+    isInvestmentMatured(investment) && getReinvestRequestAmount(investment) > 0
+  );
 }
 
 export function buildRestartedInvestmentDates(
@@ -74,6 +92,10 @@ export function canWithdrawInvestment(investment: InvestmentsParams): boolean {
 }
 
 export function getWithdrawBlockedMessage(investment: InvestmentsParams): string {
+  if (hasPendingRequest(investment)) {
+    return "Há uma solicitação em análise para este investimento.";
+  }
+
   if (!isInvestmentActive(investment.status)) {
     return "O investimento precisa estar ativo para realizar saques.";
   }
@@ -88,6 +110,10 @@ export function getWithdrawBlockedMessage(investment: InvestmentsParams): string
 export function getPartialWithdrawBlockedMessage(
   investment: InvestmentsParams,
 ): string {
+  if (hasPendingRequest(investment)) {
+    return "Há uma solicitação em análise para este investimento.";
+  }
+
   if (!isInvestmentActive(investment.status)) {
     return "O investimento precisa estar ativo para realizar saques.";
   }
@@ -115,6 +141,10 @@ export function getPartialWithdrawBlockedMessage(
 }
 
 export function getReinvestBlockedMessage(investment: InvestmentsParams): string {
+  if (hasPendingRequest(investment)) {
+    return "Há uma solicitação em análise para este investimento.";
+  }
+
   if (!isInvestmentActive(investment.status)) {
     return "O investimento precisa estar ativo para reinvestir.";
   }

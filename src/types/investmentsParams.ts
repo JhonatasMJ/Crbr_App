@@ -2,6 +2,7 @@ import type {
   InvestmentAmountHistoryEntry,
   InvestmentReinvestmentEntry,
 } from "./investmentAmountHistory";
+import type { InvestmentPendingAction } from "./investmentPendingAction";
 
 export type InvestmentsParams = {
   id?: string;
@@ -24,4 +25,5 @@ export type InvestmentsParams = {
   recused?: boolean;
   amountHistory?: InvestmentAmountHistoryEntry[];
   reinvestments?: InvestmentReinvestmentEntry[];
+  pendingAction?: InvestmentPendingAction | null;
 };

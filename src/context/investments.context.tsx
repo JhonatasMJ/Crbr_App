@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -24,10 +25,11 @@ import {
 } from "@/shared/utils/calculateInvestmentIncome";
 import { InvestmentsParams } from "@/types/investmentsParams";
 import type { InvestmentAmountHistoryEntry } from "@/types/investmentAmountHistory";
-import type { InvestmentReinvestmentEntry } from "@/types/investmentAmountHistory";
 import type { InvestmentReceiptData } from "@/types/investmentReceipt";
+import type { InvestmentPendingActionType } from "@/types/investmentPendingAction";
+import { applyPendingInvestmentActionIfNeeded } from "@/shared/utils/applyPendingInvestmentAction";
+import { buildInvestmentRequestReceipt } from "@/shared/utils/buildInvestmentRequestReceipt";
 import {
-  buildRestartedInvestmentDates,
   canPerformFullWithdraw,
   canPerformPartialWithdraw,
   canReinvestInvestment,
@@ -60,9 +62,9 @@ type InvestmentsContextType = {
       investorEmail?: string;
     },
   ) => Promise<InvestmentReceiptData>;
-  withdrawInvestmentFull: (investmentId: string) => Promise<void>;
-  withdrawInvestmentPartial: (investmentId: string) => Promise<void>;
-  reinvestInInvestment: (investmentId: string) => Promise<void>;
+  withdrawInvestmentFull: (investmentId: string) => Promise<InvestmentReceiptData>;
+  withdrawInvestmentPartial: (investmentId: string) => Promise<InvestmentReceiptData>;
+  reinvestInInvestment: (investmentId: string) => Promise<InvestmentReceiptData>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -75,6 +77,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   >(undefined);
   const [showData, setShowData] = useState(true);
   const { notify } = useSnackBarContext();
+  const applyingPendingRef = useRef<Set<string>>(new Set());
 
   const selectedInvestment = useMemo(() => {
     if (!investments.length) return undefined;
@@ -152,6 +155,16 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
         setInvestments(results);
 
+        for (const inv of results) {
+          if (!inv.id || !inv.pendingAction) continue;
+          if (applyingPendingRef.current.has(inv.id)) continue;
+
+          applyingPendingRef.current.add(inv.id);
+          void applyPendingInvestmentActionIfNeeded(inv).finally(() => {
+            applyingPendingRef.current.delete(inv.id!);
+          });
+        }
+
         setLoading(false);
       });
     });
@@ -205,41 +218,108 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }
 
+  const REQUEST_STATUS: Record<InvestmentPendingActionType, string> = {
+    "withdraw-full": INVESTMENT_STATUS.WAITING_WITHDRAW,
+    "withdraw-partial": INVESTMENT_STATUS.WAITING_EARNINGS,
+    reinvest: INVESTMENT_STATUS.WAITING_REINVEST,
+  };
+
+  const REQUEST_HISTORY: Record<InvestmentPendingActionType, string> = {
+    "withdraw-full": "Solicitação de saque total",
+    "withdraw-partial": "Solicitação de saque de rendimento",
+    reinvest: "Solicitação de reinvestimento",
+  };
+
+  const REQUEST_SUCCESS: Record<InvestmentPendingActionType, string> = {
+    "withdraw-full": "Saque total solicitado com sucesso",
+    "withdraw-partial": "Saque de rendimento solicitado com sucesso",
+    reinvest: "Reinvestimento solicitado com sucesso",
+  };
+
+  async function submitInvestmentRequest(
+    investmentId: string,
+    actionType: InvestmentPendingActionType,
+  ): Promise<InvestmentReceiptData> {
+    const investment = await fetchUserInvestment(investmentId);
+    const validators = {
+      "withdraw-full": {
+        can: canPerformFullWithdraw,
+        message: getWithdrawBlockedMessage,
+        amount: () => getFullWithdrawMaxAmount(investment),
+      },
+      "withdraw-partial": {
+        can: canPerformPartialWithdraw,
+        message: getPartialWithdrawBlockedMessage,
+        amount: () => getInvestmentEarnings(investment),
+      },
+      reinvest: {
+        can: canReinvestInvestment,
+        message: getReinvestBlockedMessage,
+        amount: () => getInvestmentBalance(investment),
+      },
+    } as const;
+
+    const { can, message, amount } = validators[actionType];
+    if (!can(investment)) {
+      throw new Error(message(investment));
+    }
+
+    const requestAmount = amount();
+    const now = new Date();
+    const previousPrincipal = getInvestmentPrincipal(investment);
+    const previousPlain = formatAmountPlain(previousPrincipal);
+    const newPlain =
+      actionType === "reinvest"
+        ? formatAmountPlain(requestAmount)
+        : previousPlain;
+    const historyEntryAmount =
+      actionType === "reinvest"
+        ? requestAmount - previousPrincipal
+        : requestAmount;
+    const history = investment.amountHistory ?? [];
+
+    await update(getUserInvestmentRef(investmentId), {
+      status: REQUEST_STATUS[actionType],
+      pendingAction: {
+        type: actionType,
+        amount: requestAmount,
+        requestedAt: now.getTime(),
+        createdDate: formatBrDate(now),
+        createdTime: formatBrTime(now),
+      },
+      amountHistory: [
+        ...history,
+        buildAmountHistoryEntry(
+          REQUEST_HISTORY[actionType],
+          historyEntryAmount,
+          previousPlain,
+          newPlain,
+          REQUEST_HISTORY[actionType],
+        ),
+      ],
+    });
+
+    notify({
+      message: REQUEST_SUCCESS[actionType],
+      messageType: "SUCCESS",
+    });
+
+    return buildInvestmentRequestReceipt(
+      investment,
+      actionType,
+      requestAmount,
+      auth.currentUser,
+    );
+  }
+
   async function withdrawInvestmentFull(investmentId: string) {
     try {
-      const investment = await fetchUserInvestment(investmentId);
-      if (!canPerformFullWithdraw(investment)) {
-        throw new Error(getWithdrawBlockedMessage(investment));
-      }
-
-      const withdrawAmount = getFullWithdrawMaxAmount(investment);
-      const previousPlain = formatAmountPlain(getInvestmentPrincipal(investment));
-      const history = investment.amountHistory ?? [];
-
-      await update(getUserInvestmentRef(investmentId), {
-        investmentAmount: "R$ 0,00",
-        status: INVESTMENT_STATUS.INACTIVE,
-        amountHistory: [
-          ...history,
-          buildAmountHistoryEntry(
-            "Saque total",
-            withdrawAmount,
-            previousPlain,
-            "0,00",
-            "Saque total do investimento",
-          ),
-        ],
-      });
-
-      notify({
-        message: "Saque total solicitado com sucesso",
-        messageType: "SUCCESS",
-      });
+      return await submitInvestmentRequest(investmentId, "withdraw-full");
     } catch (error) {
       console.error(error);
       notify({
         message:
-          error instanceof Error ? error.message : "Erro ao sacar investimento",
+          error instanceof Error ? error.message : "Erro ao solicitar saque",
         messageType: "ERROR",
       });
       throw error;
@@ -248,46 +328,14 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
   async function withdrawInvestmentPartial(investmentId: string) {
     try {
-      const investment = await fetchUserInvestment(investmentId);
-      if (!canPerformPartialWithdraw(investment)) {
-        throw new Error(getPartialWithdrawBlockedMessage(investment));
-      }
-
-      const earnings = getInvestmentEarnings(investment);
-      const previousPrincipal = getInvestmentPrincipal(investment);
-      const previousPlain = formatAmountPlain(previousPrincipal);
-      const newPlain = formatAmountPlain(previousPrincipal);
-      const history = investment.amountHistory ?? [];
-      const { startDate, endDate } = buildRestartedInvestmentDates(
-        investment.duration,
-      );
-
-      await update(getUserInvestmentRef(investmentId), {
-        investmentAmount: `R$ ${newPlain}`,
-        startDate,
-        endDate,
-        partialWithdrawalsCount: (investment.partialWithdrawalsCount ?? 0) + 1,
-        amountHistory: [
-          ...history,
-          buildAmountHistoryEntry(
-            "Saque parcial",
-            earnings,
-            previousPlain,
-            newPlain,
-            "Saque do rendimento — investimento reiniciado",
-          ),
-        ],
-      });
-
-      notify({
-        message: "Saque parcial solicitado com sucesso",
-        messageType: "SUCCESS",
-      });
+      return await submitInvestmentRequest(investmentId, "withdraw-partial");
     } catch (error) {
       console.error(error);
       notify({
         message:
-          error instanceof Error ? error.message : "Erro ao sacar parcialmente",
+          error instanceof Error
+            ? error.message
+            : "Erro ao solicitar saque de rendimento",
         messageType: "ERROR",
       });
       throw error;
@@ -296,55 +344,14 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
   async function reinvestInInvestment(investmentId: string) {
     try {
-      const investment = await fetchUserInvestment(investmentId);
-      if (!canReinvestInvestment(investment)) {
-        throw new Error(getReinvestBlockedMessage(investment));
-      }
-
-      const previousPrincipal = getInvestmentPrincipal(investment);
-      const newPrincipal = getInvestmentBalance(investment);
-      const reinvestedAmount = newPrincipal - previousPrincipal;
-      const previousPlain = formatAmountPlain(previousPrincipal);
-      const newPlain = formatAmountPlain(newPrincipal);
-      const history = investment.amountHistory ?? [];
-      const now = new Date();
-      const { startDate, endDate } = buildRestartedInvestmentDates(
-        investment.duration,
-        now,
-      );
-      const reinvestment: InvestmentReinvestmentEntry = {
-        amount: formatAmountPlain(reinvestedAmount),
-        createdAt: now.getTime(),
-        createdDate: formatBrDate(now),
-        createdTime: formatBrTime(now),
-      };
-
-      await update(getUserInvestmentRef(investmentId), {
-        investmentAmount: `R$ ${newPlain}`,
-        startDate,
-        endDate,
-        reinvestments: [...(investment.reinvestments ?? []), reinvestment],
-        amountHistory: [
-          ...history,
-          buildAmountHistoryEntry(
-            "Reinvestimento",
-            reinvestedAmount,
-            previousPlain,
-            newPlain,
-            "Reinvestimento do rendimento — novo ciclo de 4 meses",
-          ),
-        ],
-      });
-
-      notify({
-        message: "Reinvestimento registrado com sucesso",
-        messageType: "SUCCESS",
-      });
+      return await submitInvestmentRequest(investmentId, "reinvest");
     } catch (error) {
       console.error(error);
       notify({
         message:
-          error instanceof Error ? error.message : "Erro ao reinvestir",
+          error instanceof Error
+            ? error.message
+            : "Erro ao solicitar reinvestimento",
         messageType: "ERROR",
       });
       throw error;

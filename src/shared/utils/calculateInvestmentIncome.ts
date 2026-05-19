@@ -1,5 +1,8 @@
 import type { InvestmentsParams } from "@/types/investmentsParams";
-import { isInvestmentActive } from "@/shared/constants/investmentStatus";
+import {
+  INVESTMENT_STATUS,
+  isInvestmentActive,
+} from "@/shared/constants/investmentStatus";
 import { isValid, parse } from "date-fns";
 import { BR_DATE_FORMAT } from "@/shared/utils/investmentDates";
 
@@ -43,6 +46,13 @@ export function getInvestmentIncome(investment: InvestmentsParams): number {
 
 /** Principal + renda (renda zerada se não estiver Ativo). */
 export function getInvestmentBalance(investment: InvestmentsParams): number {
+  if (
+    investment.pendingAction?.type === "reinvest" &&
+    investment.status === INVESTMENT_STATUS.WAITING_REINVEST
+  ) {
+    return investment.pendingAction.amount;
+  }
+
   return getInvestmentPrincipal(investment) + getInvestmentIncome(investment);
 }
 

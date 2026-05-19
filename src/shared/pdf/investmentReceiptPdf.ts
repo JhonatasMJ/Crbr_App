@@ -132,7 +132,10 @@ async function prepareReceiptPdfUri(
   tempUri: string,
   receipt: InvestmentReceiptData,
 ): Promise<string> {
-  const fileName = buildInvestmentReceiptFileName(receipt.investorName);
+  const fileName = buildInvestmentReceiptFileName(
+    receipt.investorName,
+    receipt.receiptKind,
+  );
   const cacheDir = FileSystem.cacheDirectory;
 
   if (!cacheDir) {
@@ -160,7 +163,10 @@ export async function shareInvestmentReceiptPdf(
   });
 
   const shareUri = await prepareReceiptPdfUri(tempUri, receipt);
-  const fileName = buildInvestmentReceiptFileName(receipt.investorName);
+  const fileName = buildInvestmentReceiptFileName(
+    receipt.investorName,
+    receipt.receiptKind,
+  );
 
   const canShare = await Sharing.isAvailableAsync();
   if (!canShare) {
