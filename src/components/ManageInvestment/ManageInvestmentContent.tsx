@@ -13,8 +13,9 @@ import {
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 
 import {
-  canWithdrawInvestment,
-  getWithdrawBlockedMessage,
+  canPerformFullWithdraw,
+  canPerformPartialWithdraw,
+  canReinvestInvestment,
 } from "@/shared/utils/investmentOperations";
 
 import { getInvestmentStatusLabel } from "@/shared/constants/investmentStatus";
@@ -40,8 +41,9 @@ export function ManageInvestmentContent({
   const balance = getInvestmentBalance(investment);
   const principal = getInvestmentPrincipal(investment);
 
-  const canWithdraw = canWithdrawInvestment(investment);
-  const withdrawMessage = getWithdrawBlockedMessage(investment);
+  const canWithdrawFull = canPerformFullWithdraw(investment);
+  const canWithdrawPartial = canPerformPartialWithdraw(investment);
+  const canReinvest = canReinvestInvestment(investment);
 
   const openAction = useCallback(
     (action: InvestmentManageAction) => {
@@ -63,64 +65,50 @@ export function ManageInvestmentContent({
       contentContainerClassName="gap-6 px-6 pb-10 pt-4"
       showsVerticalScrollIndicator={false}
     >
-  <View className="gap-3">
-  <View className="flex-row gap-3">
-    <View className="flex-1 rounded-md bg-secondary p-4">
-      <Text className="font-sans-medium text-xs text-zinc-400">
-        Cota
-      </Text>
+      <View className="gap-3">
+        <View className="flex-row gap-3">
+          <View className="flex-1 rounded-md bg-secondary p-4">
+            <Text className="font-sans-medium text-xs text-zinc-400">Cota</Text>
 
-      <Text
-        numberOfLines={2}
-        className="mt-2 font-sans-bold text-lg text-white"
-      >
-        {investment.investmentName || investment.name}
-      </Text>
-    </View>
+            <Text
+              numberOfLines={2}
+              className="mt-2 font-sans-bold text-lg text-white"
+            >
+              {investment.investmentName || investment.name}
+            </Text>
+          </View>
 
-    <View className="flex-1 rounded-md bg-secondary p-4">
-      <Text className="font-sans-medium text-xs text-zinc-400">
-        Status
-      </Text>
+          <View className="flex-1 rounded-md bg-secondary p-4">
+            <Text className="font-sans-medium text-xs text-zinc-400">
+              Status
+            </Text>
 
-      <Text className="mt-2 font-sans-bold text-base text-white">
-        {getInvestmentStatusLabel(investment.status)}
-      </Text>
-    </View>
-  </View>
-
-  {/* Linha 2 */}
-  <View className="flex-row gap-3">
-    <View className="flex-1 rounded-md bg-secondary p-4">
-      <Text className="font-sans-medium text-xs text-zinc-400">
-        Saldo
-      </Text>
-
-      <Text className="mt-2 font-sans-bold text-lg text-primary">
-        {formatInvestmentAmount(balance)}
-      </Text>
-    </View>
-
-    <View className="flex-1 rounded-md bg-secondary p-4">
-      <Text className="font-sans-medium text-xs text-zinc-400">
-        Principal
-      </Text>
-
-      <Text className="mt-2 font-sans-bold text-lg text-white">
-        {formatInvestmentAmount(principal)}
-      </Text>
-    </View>
-  </View>
-</View>
-
-      {!canWithdraw && withdrawMessage ? (
-        <View className="rounded-md bg-zinc-900/60 px-4 py-3">
-          <Text className="font-sans-medium text-sm text-zinc-400">
-            {withdrawMessage}
-          </Text>
+            <Text className="mt-2 font-sans-bold text-base text-white">
+              {getInvestmentStatusLabel(investment.status)}
+            </Text>
+          </View>
         </View>
-      ) : null}
 
+        <View className="flex-row gap-3">
+          <View className="flex-1 rounded-md bg-secondary p-4">
+            <Text className="font-sans-medium text-xs text-zinc-400">Saldo</Text>
+
+            <Text className="mt-2 font-sans-bold text-lg text-primary">
+              {formatInvestmentAmount(balance)}
+            </Text>
+          </View>
+
+          <View className="flex-1 rounded-md bg-secondary p-4">
+            <Text className="font-sans-medium text-xs text-zinc-400">
+              Principal
+            </Text>
+
+            <Text className="mt-2 font-sans-bold text-lg text-white">
+              {formatInvestmentAmount(principal)}
+            </Text>
+          </View>
+        </View>
+      </View>
 
       <View className="gap-3">
         <Text className="font-sans-bold text-lg text-white">
@@ -129,24 +117,25 @@ export function ManageInvestmentContent({
 
         <ManageInvestmentOptionRow
           title="Sacar total"
-          description="Resgatar todo o saldo disponível desta cota"
+          description="Resgatar o valor disponível (principal ou saldo completo após o vencimento)"
           icon={Wallet}
-          disabled={!canWithdraw}
+          disabled={!canWithdrawFull}
           onPress={() => openAction("withdraw-full")}
         />
 
         <ManageInvestmentOptionRow
-          title="Sacar parcial"
-          description="Resgatar apenas uma parte do saldo"
+          title="Sacar rendimento"
+          description="Resgatar apenas o rendimento e reiniciar o ciclo com o principal"
           icon={HandCoins}
-          disabled={!canWithdraw}
+          disabled={!canWithdrawPartial}
           onPress={() => openAction("withdraw-partial")}
         />
 
         <ManageInvestmentOptionRow
           title="Reinvestir"
-          description="Adicionar um novo aporte nesta mesma cota"
+          description="Incorporar o rendimento ao principal e reiniciar o ciclo de 4 meses"
           icon={RefreshCw}
+          disabled={!canReinvest}
           onPress={() => openAction("reinvest")}
         />
       </View>

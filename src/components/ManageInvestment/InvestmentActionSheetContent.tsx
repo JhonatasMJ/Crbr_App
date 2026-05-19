@@ -1,29 +1,27 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import type { Resolver } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { CurrencyInputLabel } from "@/components/CurrencyInputLabel";
 import { useBottomSheetContext } from "@/context/bottomShet.context";
 import { useInvestments } from "@/context/investments.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
-import {
-  createInvestmentActionAmountSchema,
-  type InvestmentActionAmountValues,
-} from "@/shared/schemas/investmentAction";
 import {
   getInvestmentBalance,
   getInvestmentPrincipal,
 } from "@/shared/utils/calculateInvestmentIncome";
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import {
-  canWithdrawInvestment,
+  canPerformFullWithdraw,
+  canPerformPartialWithdraw,
+  canReinvestInvestment,
+  getFullWithdrawMaxAmount,
+  getInvestmentEarnings,
+  getPartialWithdrawBlockedMessage,
+  getReinvestBlockedMessage,
   getWithdrawBlockedMessage,
+  isInvestmentMatured,
 } from "@/shared/utils/investmentOperations";
 import type { InvestmentsParams } from "@/types/investmentsParams";
-import { isInvestmentActive } from "@/shared/constants/investmentStatus";
 
 export type InvestmentManageAction = "withdraw-full" | "withdraw-partial" | "reinvest";
 
@@ -39,17 +37,20 @@ const ACTION_COPY: Record<
   "withdraw-full": {
     title: "Sacar total",
     confirmLabel: "Confirmar saque total",
-    description: "Todo o saldo disponível será sacado deste investimento.",
+    description:
+      "Resgata o valor disponível: antes do vencimento, apenas o principal; após o vencimento, principal + rendimento.",
   },
   "withdraw-partial": {
-    title: "Sacar parcial",
-    confirmLabel: "Confirmar saque parcial",
-    description: "Informe o valor que deseja sacar parcialmente.",
+    title: "Sacar rendimento",
+    confirmLabel: "Confirmar saque do rendimento",
+    description:
+      "Resgata apenas o rendimento acumulado. O principal permanece e o investimento recomeça por mais 4 meses.",
   },
   reinvest: {
     title: "Reinvestir",
     confirmLabel: "Confirmar reinvestimento",
-    description: "O valor será adicionado ao principal deste investimento.",
+    description:
+      "O rendimento é incorporado ao principal e o investimento recomeça por mais 4 meses a partir de hoje.",
   },
 };
 
@@ -68,57 +69,48 @@ export function InvestmentActionSheetContent({
 
   const balance = getInvestmentBalance(investment);
   const principal = getInvestmentPrincipal(investment);
+  const earnings = getInvestmentEarnings(investment);
+  const matured = isInvestmentMatured(investment);
   const copy = ACTION_COPY[action];
-  const needsAmount = action !== "withdraw-full";
-  const maxAmount = action === "reinvest" ? 150_000 : balance;
 
-  const schema = useMemo(
-    () => createInvestmentActionAmountSchema(maxAmount),
-    [maxAmount],
-  );
+  const actionAmount =
+    action === "withdraw-full"
+      ? getFullWithdrawMaxAmount(investment)
+      : action === "withdraw-partial"
+        ? earnings
+        : balance;
 
-  const { control, handleSubmit } = useForm<InvestmentActionAmountValues>({
-    defaultValues: { amount: null },
-    resolver: yupResolver(schema) as Resolver<InvestmentActionAmountValues>,
-  });
+  const canConfirm =
+    action === "withdraw-full"
+      ? canPerformFullWithdraw(investment)
+      : action === "withdraw-partial"
+        ? canPerformPartialWithdraw(investment)
+        : canReinvestInvestment(investment);
 
-  const withdrawBlockedMessage = getWithdrawBlockedMessage(investment);
-  const canWithdraw = canWithdrawInvestment(investment);
-  const canReinvest = isInvestmentActive(investment.status);
+  const blockedMessage =
+    action === "withdraw-full"
+      ? getWithdrawBlockedMessage(investment)
+      : action === "withdraw-partial"
+        ? getPartialWithdrawBlockedMessage(investment)
+        : getReinvestBlockedMessage(investment);
 
-  async function onConfirm(data?: InvestmentActionAmountValues) {
+  async function onConfirm() {
     if (!investment.id) return;
 
     try {
       setSubmitting(true);
 
+      if (!canConfirm) {
+        notify({ message: blockedMessage, messageType: "ERROR" });
+        return;
+      }
+
       if (action === "withdraw-full") {
-        if (!canWithdraw) {
-          notify({ message: withdrawBlockedMessage, messageType: "ERROR" });
-          return;
-        }
         await withdrawInvestmentFull(investment.id);
-      }
-
-      if (action === "withdraw-partial") {
-        if (!canWithdraw) {
-          notify({ message: withdrawBlockedMessage, messageType: "ERROR" });
-          return;
-        }
-        if (data?.amount == null) return;
-        await withdrawInvestmentPartial(investment.id, data.amount);
-      }
-
-      if (action === "reinvest") {
-        if (!canReinvest) {
-          notify({
-            message: "O investimento precisa estar ativo para reinvestir.",
-            messageType: "ERROR",
-          });
-          return;
-        }
-        if (data?.amount == null) return;
-        await reinvestInInvestment(investment.id, data.amount);
+      } else if (action === "withdraw-partial") {
+        await withdrawInvestmentPartial(investment.id);
+      } else {
+        await reinvestInInvestment(investment.id);
       }
 
       closeBottomSheet();
@@ -143,55 +135,45 @@ export function InvestmentActionSheetContent({
         <Text className="mt-1 font-sans-bold text-lg text-white">
           {investment.investmentName || investment.name}
         </Text>
+
         <View className="mt-3 flex-row justify-between border-t border-zinc-800 pt-3">
           <Text className="font-sans text-sm text-zinc-400">Saldo atual</Text>
           <Text className="font-sans-bold text-base text-primary">
             {formatInvestmentAmount(balance)}
           </Text>
         </View>
-        {action === "withdraw-full" ? (
+
+        <View className="mt-2 flex-row justify-between">
+          <Text className="font-sans text-sm text-zinc-400">Principal</Text>
+          <Text className="font-sans-semibold text-sm text-white">
+            {formatInvestmentAmount(principal)}
+          </Text>
+        </View>
+
+        {matured && earnings > 0 ? (
           <View className="mt-2 flex-row justify-between">
-            <Text className="font-sans text-sm text-zinc-400">Principal</Text>
+            <Text className="font-sans text-sm text-zinc-400">Rendimento</Text>
             <Text className="font-sans-semibold text-sm text-white">
-              {formatInvestmentAmount(principal)}
+              {formatInvestmentAmount(earnings)}
             </Text>
           </View>
         ) : null}
+
+        <View className="mt-3 flex-row justify-between border-t border-zinc-800 pt-3">
+          <Text className="font-sans-semibold text-sm text-zinc-400">
+            Valor desta operação
+          </Text>
+          <Text className="font-sans-bold text-base text-primary">
+            {formatInvestmentAmount(actionAmount)}
+          </Text>
+        </View>
       </View>
-
-      {(action === "withdraw-full" || action === "withdraw-partial") &&
-      !canWithdraw ? (
-        <Text className="font-sans-medium text-sm text-red-400">
-          {withdrawBlockedMessage}
-        </Text>
-      ) : null}
-
-      {action === "reinvest" && !canReinvest ? (
-        <Text className="font-sans-medium text-sm text-red-400">
-          O investimento precisa estar ativo para reinvestir.
-        </Text>
-      ) : null}
-
-      {needsAmount ? (
-        <CurrencyInputLabel
-          control={control}
-          name="amount"
-          label={action === "reinvest" ? "Valor do reinvestimento" : "Valor do saque"}
-        />
-      ) : null}
 
       <Button
         className="bg-primary"
         size="xl"
-        disabled={
-          submitting ||
-          (action === "withdraw-full" && !canWithdraw) ||
-          (action === "withdraw-partial" && !canWithdraw) ||
-          (action === "reinvest" && !canReinvest)
-        }
-        onPress={
-          needsAmount ? handleSubmit((data) => onConfirm(data)) : () => onConfirm()
-        }
+        disabled={submitting || !canConfirm}
+        onPress={onConfirm}
       >
         <Text className="font-sans-bold text-lg text-black">
           {submitting ? "Processando..." : copy.confirmLabel}

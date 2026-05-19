@@ -27,7 +27,14 @@ import type { InvestmentAmountHistoryEntry } from "@/types/investmentAmountHisto
 import type { InvestmentReinvestmentEntry } from "@/types/investmentAmountHistory";
 import type { InvestmentReceiptData } from "@/types/investmentReceipt";
 import {
-  canWithdrawInvestment,
+  buildRestartedInvestmentDates,
+  canPerformFullWithdraw,
+  canPerformPartialWithdraw,
+  canReinvestInvestment,
+  getFullWithdrawMaxAmount,
+  getInvestmentEarnings,
+  getPartialWithdrawBlockedMessage,
+  getReinvestBlockedMessage,
   getWithdrawBlockedMessage,
 } from "@/shared/utils/investmentOperations";
 import { useSnackBarContext } from "./snackbar.context";
@@ -54,11 +61,8 @@ type InvestmentsContextType = {
     },
   ) => Promise<InvestmentReceiptData>;
   withdrawInvestmentFull: (investmentId: string) => Promise<void>;
-  withdrawInvestmentPartial: (
-    investmentId: string,
-    amount: number,
-  ) => Promise<void>;
-  reinvestInInvestment: (investmentId: string, amount: number) => Promise<void>;
+  withdrawInvestmentPartial: (investmentId: string) => Promise<void>;
+  reinvestInInvestment: (investmentId: string) => Promise<void>;
 };
 
 const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
@@ -201,18 +205,14 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }
 
-  function assertCanWithdraw(investment: InvestmentsParams) {
-    if (!canWithdrawInvestment(investment)) {
-      throw new Error(getWithdrawBlockedMessage(investment));
-    }
-  }
-
   async function withdrawInvestmentFull(investmentId: string) {
     try {
       const investment = await fetchUserInvestment(investmentId);
-      assertCanWithdraw(investment);
+      if (!canPerformFullWithdraw(investment)) {
+        throw new Error(getWithdrawBlockedMessage(investment));
+      }
 
-      const balance = getInvestmentBalance(investment);
+      const withdrawAmount = getFullWithdrawMaxAmount(investment);
       const previousPlain = formatAmountPlain(getInvestmentPrincipal(investment));
       const history = investment.amountHistory ?? [];
 
@@ -223,7 +223,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
           ...history,
           buildAmountHistoryEntry(
             "Saque total",
-            balance,
+            withdrawAmount,
             previousPlain,
             "0,00",
             "Saque total do investimento",
@@ -246,38 +246,35 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  async function withdrawInvestmentPartial(
-    investmentId: string,
-    amount: number,
-  ) {
+  async function withdrawInvestmentPartial(investmentId: string) {
     try {
       const investment = await fetchUserInvestment(investmentId);
-      assertCanWithdraw(investment);
-
-      const balance = getInvestmentBalance(investment);
-      if (amount > balance) {
-        throw new Error(
-          `Valor máximo para saque parcial é ${formatAmountPlain(balance)}`,
-        );
+      if (!canPerformPartialWithdraw(investment)) {
+        throw new Error(getPartialWithdrawBlockedMessage(investment));
       }
 
+      const earnings = getInvestmentEarnings(investment);
       const previousPrincipal = getInvestmentPrincipal(investment);
-      const newPrincipal = Math.max(0, previousPrincipal - amount);
       const previousPlain = formatAmountPlain(previousPrincipal);
-      const newPlain = formatAmountPlain(newPrincipal);
+      const newPlain = formatAmountPlain(previousPrincipal);
       const history = investment.amountHistory ?? [];
+      const { startDate, endDate } = buildRestartedInvestmentDates(
+        investment.duration,
+      );
 
       await update(getUserInvestmentRef(investmentId), {
         investmentAmount: `R$ ${newPlain}`,
+        startDate,
+        endDate,
         partialWithdrawalsCount: (investment.partialWithdrawalsCount ?? 0) + 1,
         amountHistory: [
           ...history,
           buildAmountHistoryEntry(
             "Saque parcial",
-            amount,
+            earnings,
             previousPlain,
             newPlain,
-            "Saque parcial do investimento",
+            "Saque do rendimento — investimento reiniciado",
           ),
         ],
       });
@@ -297,24 +294,26 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  async function reinvestInInvestment(investmentId: string, amount: number) {
+  async function reinvestInInvestment(investmentId: string) {
     try {
       const investment = await fetchUserInvestment(investmentId);
-      if (!isInvestmentActive(investment.status)) {
-        throw new Error("O investimento precisa estar ativo para reinvestir.");
-      }
-      if (amount <= 0) {
-        throw new Error("Informe um valor válido para reinvestir.");
+      if (!canReinvestInvestment(investment)) {
+        throw new Error(getReinvestBlockedMessage(investment));
       }
 
       const previousPrincipal = getInvestmentPrincipal(investment);
-      const newPrincipal = previousPrincipal + amount;
+      const newPrincipal = getInvestmentBalance(investment);
+      const reinvestedAmount = newPrincipal - previousPrincipal;
       const previousPlain = formatAmountPlain(previousPrincipal);
       const newPlain = formatAmountPlain(newPrincipal);
       const history = investment.amountHistory ?? [];
       const now = new Date();
+      const { startDate, endDate } = buildRestartedInvestmentDates(
+        investment.duration,
+        now,
+      );
       const reinvestment: InvestmentReinvestmentEntry = {
-        amount: formatAmountPlain(amount),
+        amount: formatAmountPlain(reinvestedAmount),
         createdAt: now.getTime(),
         createdDate: formatBrDate(now),
         createdTime: formatBrTime(now),
@@ -322,15 +321,17 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
       await update(getUserInvestmentRef(investmentId), {
         investmentAmount: `R$ ${newPlain}`,
+        startDate,
+        endDate,
         reinvestments: [...(investment.reinvestments ?? []), reinvestment],
         amountHistory: [
           ...history,
           buildAmountHistoryEntry(
             "Reinvestimento",
-            amount,
+            reinvestedAmount,
             previousPlain,
             newPlain,
-            "Reinvestimento no investimento",
+            "Reinvestimento do rendimento — novo ciclo de 4 meses",
           ),
         ],
       });
