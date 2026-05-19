@@ -3,6 +3,7 @@ import type {
   InvestmentReinvestmentEntry,
 } from "./investmentAmountHistory";
 import type { InvestmentPendingAction } from "./investmentPendingAction";
+import type { LegacyInvestmentHistoryEntry } from "./investmentTimeline";
 
 export type InvestmentsParams = {
   id?: string;
@@ -26,4 +27,6 @@ export type InvestmentsParams = {
   amountHistory?: InvestmentAmountHistoryEntry[];
   reinvestments?: InvestmentReinvestmentEntry[];
   pendingAction?: InvestmentPendingAction | null;
+  /** Formato legado no Realtime Database (objeto com push ids). */
+  history?: Record<string, LegacyInvestmentHistoryEntry>;
 };

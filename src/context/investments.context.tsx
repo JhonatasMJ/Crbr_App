@@ -24,6 +24,7 @@ import {
   getInvestmentPrincipal,
 } from "@/shared/utils/calculateInvestmentIncome";
 import { InvestmentsParams } from "@/types/investmentsParams";
+import type { DeletedInvestmentArchive } from "@/types/investmentTimeline";
 import type { InvestmentAmountHistoryEntry } from "@/types/investmentAmountHistory";
 import type { InvestmentReceiptData } from "@/types/investmentReceipt";
 import type { InvestmentPendingActionType } from "@/types/investmentPendingAction";
@@ -43,6 +44,7 @@ import { useSnackBarContext } from "./snackbar.context";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
+  deletedInvestments: DeletedInvestmentArchive[];
   /** Investimento exibido no header (selecionado ou o primeiro). */
   selectedInvestment: InvestmentsParams | undefined;
   selectInvestment: (id: string | undefined) => void;
@@ -72,6 +74,9 @@ const InvestmentsContext = createContext<InvestmentsContextType | null>(null);
 export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState<InvestmentsParams[]>([]);
+  const [deletedInvestments, setDeletedInvestments] = useState<
+    DeletedInvestmentArchive[]
+  >([]);
   const [selectedInvestmentId, setSelectedInvestmentId] = useState<
     string | undefined
   >(undefined);
@@ -111,17 +116,22 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   }
 
   useEffect(() => {
-    let unsubscribeDb: any = null;
+    let unsubscribeDb: (() => void) | null = null;
+    let unsubscribeDeletedDb: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      // limpa listener anterior
       if (unsubscribeDb) {
         unsubscribeDb();
         unsubscribeDb = null;
       }
+      if (unsubscribeDeletedDb) {
+        unsubscribeDeletedDb();
+        unsubscribeDeletedDb = null;
+      }
 
       if (!user) {
         setInvestments([]);
+        setDeletedInvestments([]);
         setLoading(false);
         return;
       }
@@ -130,8 +140,32 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
       const userInvestmentsRef = ref(
         database,
-        `users/${user.uid}/investments`
+        `users/${user.uid}/investments`,
       );
+      const deletedInvestmentsRef = ref(
+        database,
+        `users/${user.uid}/deletedInvestments`,
+      );
+
+      unsubscribeDeletedDb = onValue(deletedInvestmentsRef, (snapshot) => {
+        const raw = snapshot.val();
+        if (!raw || typeof raw !== "object") {
+          setDeletedInvestments([]);
+          return;
+        }
+
+        const archives = Object.entries(raw)
+          .filter(
+            ([, value]) =>
+              Boolean(value) && typeof value === "object" && !Array.isArray(value),
+          )
+          .map(([id, value]) => ({
+            id,
+            ...(value as Omit<DeletedInvestmentArchive, "id">),
+          }));
+
+        setDeletedInvestments(archives);
+      });
 
       unsubscribeDb = onValue(userInvestmentsRef, (snapshot) => {
         const rawInvestments = snapshot.val();
@@ -174,6 +208,9 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
       if (unsubscribeDb) {
         unsubscribeDb();
+      }
+      if (unsubscribeDeletedDb) {
+        unsubscribeDeletedDb();
       }
     };
   }, []);
@@ -452,6 +489,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
     <InvestmentsContext.Provider
       value={{
         investments,
+        deletedInvestments,
         selectedInvestment,
         selectInvestment,
         allInvestments,

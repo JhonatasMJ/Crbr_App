@@ -10,10 +10,9 @@ import {
 } from "@react-navigation/native";
 import Logo from "@/assets/logoSvg.svg";
 import Line from "@/assets/line.svg";
-import { Eye, EyeOff, Menu, Settings } from "lucide-react-native";
+import { Eye, EyeOff, History, Menu, Settings } from "lucide-react-native";
 import { router } from "expo-router";
 import { useInvestments } from "@/context/investments.context";
-import { useSnackBarContext } from "@/context/snackbar.context";
 import { getHeaderStatisticItems } from "@/shared/utils/statisticData";
 import { StatisticCard } from "./StatisticCard";
 import { Button } from "./ui/button";
@@ -21,9 +20,17 @@ import { Button } from "./ui/button";
 export function HomeHeader() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { notify } = useSnackBarContext();
   const { selectedInvestment, TotalBalance, allInvestments, handleToggleBalance, showData } =
     useInvestments();
+
+  function handleOpenInvestmentHistory() {
+    router.push({
+      pathname: "/(drawer)/investment-history",
+      ...(selectedInvestment?.id
+        ? { params: { investmentId: selectedInvestment.id } }
+        : {}),
+    });
+  }
 
   function handleOpenManageInvestment() {
     if (!selectedInvestment?.id) {
@@ -94,6 +101,13 @@ export function HomeHeader() {
             />
           </View>
           <View className="flex-row items-center gap-2">
+            <Button
+              size="icon"
+              className="bg-secondary"
+              onPress={handleOpenInvestmentHistory}
+            >
+              <History size={16} color="#fff" />
+            </Button>
             <Button
               size="icon"
               className="bg-secondary"

@@ -166,6 +166,11 @@ export default function DrawerLayout() {
         name="manage-investment"
         options={hiddenDrawerItem}
       />
+
+      <Drawer.Screen
+        name="investment-history"
+        options={hiddenDrawerItem}
+      />
     </Drawer>
   );
 }
