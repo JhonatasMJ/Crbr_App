@@ -1,20 +1,25 @@
+import { AppIntroOverlay } from "@/components/AppIntroOverlay";
+import { useEffect, useState } from "react";
+import { View, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
+import { useAuth } from "@/context/auth.context";
+import { getPostLoginHref } from "@/shared/utils/authRouting";
+
+/* Carousel de boas-vindas — desativado
 import { Button } from "@/components/ui/button";
-import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
   Text,
   Dimensions,
   Image,
   ImageSourcePropType,
   StyleSheet,
-  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Carousel from "react-native-reanimated-carousel";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { colors } from "@/themes/colors";
-import { Link, router } from "expo-router";
-import { useAuth } from "@/context/auth.context";
-import { getPostLoginHref } from "@/shared/utils/authRouting";
+import { Link } from "expo-router";
+
 const { width, height } = Dimensions.get("window");
 
 type DataProps = {
@@ -43,11 +48,11 @@ const data: DataProps[] = [
     img: require("../../assets/images/img2.png"),
   },
 ];
+*/
 
 export default function Index() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [welcomeReady, setWelcomeReady] = useState(false);
-  const insets = useSafeAreaInsets();
+  const [introDone, setIntroDone] = useState(false);
+  const [authCheckDone, setAuthCheckDone] = useState(false);
   const {
     user,
     userProfile,
@@ -57,6 +62,12 @@ export default function Index() {
   } = useAuth();
 
   useEffect(() => {
+    if (user) {
+      setIntroDone(true);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (initializing) return;
 
     if (user) {
@@ -64,7 +75,6 @@ export default function Index() {
       return;
     }
 
-    setWelcomeReady(false);
     let cancelled = false;
     (async () => {
       try {
@@ -83,7 +93,7 @@ export default function Index() {
       } catch (e) {
         console.error(e);
       }
-      if (!cancelled) setWelcomeReady(true);
+      if (!cancelled) setAuthCheckDone(true);
     })();
 
     return () => {
@@ -97,18 +107,12 @@ export default function Index() {
     tryBiometricRememberedLogin,
   ]);
 
-  const { paginationOverlayTop, slideTopPadding } = useMemo(() => {
-    const paginationTopSpacing = 12;
-    const barHeight = 4;
-    const belowBarGap = 24;
-    const top = insets.top + paginationTopSpacing;
-    return {
-      paginationOverlayTop: top,
-      slideTopPadding: top + barHeight + belowBarGap,
-    };
-  }, [insets.top]);
+  useEffect(() => {
+    if (!introDone || !authCheckDone || user) return;
+    router.replace("/(auth)/login");
+  }, [introDone, authCheckDone, user]);
 
-  if (initializing || user || !welcomeReady) {
+  if (user) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" className="text-primary" />
@@ -117,96 +121,14 @@ export default function Index() {
   }
 
   return (
-    <View className="flex-1 relative">
-      <Carousel
-        autoPlay
-        loop
-        autoPlayInterval={3000}
-        pagingEnabled
-        width={width}
-        height={height}
-        data={data}
-        onSnapToItem={setActiveIndex}
-        renderItem={({ item }) => (
-          <View className="flex-1 overflow-hidden bg-black">
-            <Image
-              source={item.img}
-              resizeMode="cover"
-              style={StyleSheet.absoluteFillObject}
-              className="h-full w-full"
-            />
-            <View
-              pointerEvents="none"
-              className="absolute inset-0 bg-black/30"
-            />
-
-            <View
-              className="z-10 flex-1 px-6"
-              style={{
-                paddingTop: slideTopPadding,
-                paddingBottom: insets.bottom + 36,
-              }}
-            >
-              <View className="items-center pb-8">
-                <Image
-                  source={require("../../assets/images/logo.png")}
-                  className="h-40 w-40"
-                  resizeMode="contain"
-                />
-              </View>
-
-              <View className="flex-1 justify-center">
-                <Text className="mb-2 font-sans-bold text-3xl text-primary">
-                  {item.title}
-                </Text>
-
-                <Text className="font-sans text-lg text-white">
-                  {item.subtitle}
-                </Text>
-              </View>
-
-              <View className="mt-6 gap-6">
-              <Link href="/(auth)/register" asChild>
-                <Button size="xl" className="bg-primary">
-                  <Text className="font-sans-bold text-lg text-secondary">
-                    Criar Conta
-                  </Text>
-                </Button>
-              </Link>
-
-          
-                <Button
-                  size="xl"
-                  variant="ghost"
-                  className="border-2 border-primary bg-transparent"
-                  onPress={() => router.push("/(auth)/login")}
-                >
-                  <Text className="font-sans-bold text-lg text-primary">
-                    Entrar
-                  </Text>
-                </Button>
-             
-              </View>
-            </View>
-          </View>
-        )}
-      />
-
-      <View
-        pointerEvents="none"
-        className="absolute left-0 right-0 z-10 flex-row gap-2 px-6"
-        style={{ top: paginationOverlayTop }}
-      >
-        {data.map((_, i) => (
-          <View
-            key={i}
-            className="h-1 flex-1 rounded-full"
-            style={{
-              backgroundColor: i === activeIndex ? colors.primary : "#444",
-            }}
-          />
-        ))}
-      </View>
+    <View className="flex-1 bg-background">
+      {!introDone ? (
+        <AppIntroOverlay onFinish={() => setIntroDone(true)} />
+      ) : (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" className="text-primary" />
+        </View>
+      )}
     </View>
   );
 }
