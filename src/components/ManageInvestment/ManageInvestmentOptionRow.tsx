@@ -1,9 +1,11 @@
 import { Pressable, View } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Lock } from "lucide-react-native";
+
 import { Text } from "@/components/ui/text";
 import { Icon } from "@/components/ui/icon";
 import { colors } from "@/themes/colors";
+import clsx from "clsx";
 
 type ManageInvestmentOptionRowProps = {
   title: string;
@@ -24,18 +26,38 @@ export function ManageInvestmentOptionRow({
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={`flex-row items-center gap-4 rounded-md border border-zinc-800 bg-secondary p-4 ${
-        disabled ? "opacity-50" : "active:opacity-90"
-      }`}
+      className={clsx(
+        "rounded-md bg-secondary",
+        disabled ? "bg-secondary/62" : "active:opacity-100",
+      )}
     >
-      <View className="h-11 w-11 items-center justify-center rounded-md bg-primary/15">
-        <Icon as={icon} size={22} color={colors.primary} strokeWidth={2} />
+      <View className="flex-row items-center p-4">
+        <View className="h-14 w-14 items-center justify-center rounded-md bg-primary/10">
+          {disabled ? (
+            <Lock size={18} color={colors.primary} />
+          ) : (
+            <Icon as={icon} size={24} color={colors.primary} strokeWidth={2} />
+          )}
+        </View>
+
+        <View className="ml-4 flex-1">
+          <Text className="font-sans-semibold text-base text-white">
+            {title}
+          </Text>
+
+          <Text className="mt-1 font-sans text-sm leading-5 text-zinc-400">
+            {description}
+          </Text>
+        </View>
+
+        <View className="ml-3 h-10 w-10 items-center justify-center rounded-md bg-zinc-800/70">
+          {disabled ? (
+            <Lock size={18} color={colors.primary} />
+          ) : (
+            <ChevronRight size={18} color={colors.primary} />
+          )}
+        </View>
       </View>
-      <View className="flex-1">
-        <Text className="font-sans-bold text-base text-white">{title}</Text>
-        <Text className="mt-1 font-sans text-sm text-zinc-400">{description}</Text>
-      </View>
-      <ChevronRight size={20} color={colors.primary} />
     </Pressable>
   );
 }
