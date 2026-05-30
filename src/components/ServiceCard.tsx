@@ -22,14 +22,14 @@ const serviceData: ServiceCardProps[] = [
     {
         id: 2,
         title: "Seguro",
-        description: "Crédito rápido e fácil para suas necessicdades..",
+        description: "Proteção e tranquilidade para o que importa.",
         icon: ShieldIcon,
         redirectWhatsapp: "Olá, gostaria de saber mais sobre o seguro.",
     },
     {
         id: 3,
         title: "Consórcio",
-        description: "Crédito rápido e fácil para suas necessicdades.",
+        description: "Planeje suas conquistas sem juros.",
         icon: CreditCardIcon,
         redirectWhatsapp: "Olá, gostaria de saber mais sobre o consórcio.",
     },
