@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Text } from "react-native";
 import { InputLabel } from "../InputLabel";
 import { useForm } from "react-hook-form";
 import type { UserUpdatePayload } from "@/types/user";
@@ -9,6 +9,8 @@ import { Button } from "../ui/button";
 import { useSnackBarContext } from "@/context/snackbar.context";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { updateUserSchema } from "@/shared/schemas/updateUser";
+import { resolveUserDisplayName } from "@/shared/utils/formatName";
+import { KeyboardView } from "../KeyboardView";
 
 export function UpdateUserForm() {
   const { notify } = useSnackBarContext();
@@ -25,7 +27,7 @@ export function UpdateUserForm() {
   useEffect(() => {
     if (!user) return;
     reset({
-      name: userProfile?.name ?? user.displayName ?? "",
+      name: resolveUserDisplayName(userProfile, user.displayName),
       phoneNumber: userProfile?.phoneNumber ?? "",
       city: userProfile?.city ?? "",
     });
@@ -47,14 +49,14 @@ export function UpdateUserForm() {
   }
 
   return (
-    <View className="gap-10">
+    <KeyboardView className="flex-1" contentContainerClassName="gap-10">
       <InputLabel
         control={control}
         name="name"
         label="Nome Completo"
         placeholder="Digite seu nome completo"
       />
-    
+
       <PhoneInputLabel control={control} name="phoneNumber" label="Telefone" />
       <InputLabel
         control={control}
@@ -72,6 +74,6 @@ export function UpdateUserForm() {
           {loading ? "Atualizando..." : "Atualizar"}
         </Text>
       </Button>
-    </View>
+    </KeyboardView>
   );
 }

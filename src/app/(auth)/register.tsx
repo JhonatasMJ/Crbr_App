@@ -1,7 +1,7 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ActivityIndicator, View } from "react-native";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
 import { RegisterForm } from "@/components/Forms/RegisterForm";
 import { ContactForm } from "@/components/Forms/ContactForm";
@@ -11,7 +11,6 @@ import type { RegisterParams } from "@/types/registerParams";
 import { registerFullSchema } from "@/shared/schemas/registerFullSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useAuth } from "@/context/auth.context";
-import { ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { getPostLoginHref } from "@/shared/utils/authRouting";
 const steps = ["account", "contact", "password"] as const;
@@ -109,55 +108,40 @@ export default function Register() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingBottom: 40,
+      <Header span="Bem Vindo(a)" title="Crie sua conta" />
+      <View className="flex-1">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            if (v === "account" || v === "contact" || v === "password") {
+              void handleTabChange(v);
+            }
           }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          className="mt-6 flex-1"
         >
-          <Header span="Bem Vindo(a)" title="Crie sua conta" />
+          <TabsList className="bg-secondary ">
+            <TabsTrigger value="account">Pessoais</TabsTrigger>
+            <TabsTrigger value="contact">Contato</TabsTrigger>
+            <TabsTrigger value="password">Senha</TabsTrigger>
+          </TabsList>
 
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => {
-              if (v === "account" || v === "contact" || v === "password") {
-                void handleTabChange(v);
-              }
-            }}
-            className="mt-6"
-          >
-            <TabsList className="bg-secondary ">
-              <TabsTrigger  value="account">Pessoais</TabsTrigger>
-              <TabsTrigger value="contact">Contato</TabsTrigger>
-              <TabsTrigger value="password">Senha</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="account">
+          <View className="mt-2 flex-1">
+            {activeTab === "account" ? (
               <RegisterForm control={control} onNext={goNextFromAccount} />
-            </TabsContent>
-
-            <TabsContent value="contact">
+            ) : null}
+            {activeTab === "contact" ? (
               <ContactForm control={control} onNext={goNextFromContact} />
-            </TabsContent>
-
-            <TabsContent value="password">
+            ) : null}
+            {activeTab === "password" ? (
               <RegisterPasswordForm
                 control={control}
                 onSubmit={handleSubmit(submitAll)}
                 isSubmitting={isSubmitting}
               />
-            </TabsContent>
-          </Tabs>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            ) : null}
+          </View>
+        </Tabs>
+      </View>
     </SafeAreaView>
   );
 }

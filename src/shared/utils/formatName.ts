@@ -1,3 +1,17 @@
+type UserNameSource = {
+  username?: string;
+  name?: string;
+};
+
+export function resolveUserDisplayName(
+  profile?: UserNameSource | null,
+  displayName?: string | null,
+): string {
+  const fromProfile = profile?.username?.trim() || profile?.name?.trim();
+  if (fromProfile) return fromProfile;
+  return displayName?.trim() || "";
+}
+
 export function getFirstName(fullName: string) {
     return fullName.split(" ")[0];
   };

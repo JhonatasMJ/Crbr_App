@@ -41,6 +41,7 @@ import {
   getWithdrawBlockedMessage,
 } from "@/shared/utils/investmentOperations";
 import { useSnackBarContext } from "./snackbar.context";
+import { useAuth } from "./auth.context";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
@@ -82,6 +83,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   >(undefined);
   const [showData, setShowData] = useState(true);
   const { notify } = useSnackBarContext();
+  const { userProfile } = useAuth();
   const applyingPendingRef = useRef<Set<string>>(new Set());
 
   const selectedInvestment = useMemo(() => {
@@ -346,6 +348,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
       actionType,
       requestAmount,
       auth.currentUser,
+      userProfile,
     );
   }
 

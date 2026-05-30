@@ -1,8 +1,9 @@
 import type { Control } from "react-hook-form";
 import type { RegisterParams } from "@/types/registerParams";
 import { Button } from "../ui/button";
-import { Text, View } from "react-native";
+import { Text } from "react-native";
 import { InputLabel } from "../InputLabel";
+import { KeyboardView } from "../KeyboardView";
 import { maskCPF } from "@/shared/utils/masks/cpfMask";
 
 export function RegisterForm({
@@ -13,7 +14,7 @@ export function RegisterForm({
   onNext: () => void | Promise<void>;
 }) {
   return (
-    <View className="gap-10">
+    <KeyboardView className="flex-1" contentContainerClassName="gap-10">
       <InputLabel
         control={control}
         name="name"
@@ -28,16 +29,17 @@ export function RegisterForm({
         placeholder="Digite seu email"
       />
 
-      <InputLabel 
-      control={control} 
-      name="cpf" 
-      label="CPF" 
-      maskFunction={maskCPF} 
-      placeholder="Digite seu CPF" />
+      <InputLabel
+        control={control}
+        name="cpf"
+        label="CPF"
+        maskFunction={maskCPF}
+        placeholder="Digite seu CPF"
+      />
 
       <Button className="bg-primary" size="xl" onPress={() => void onNext()}>
         <Text className="font-sans-bold text-lg">Próximo</Text>
       </Button>
-    </View>
+    </KeyboardView>
   );
 }

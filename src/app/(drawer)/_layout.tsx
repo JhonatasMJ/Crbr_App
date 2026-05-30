@@ -15,7 +15,7 @@ import {
 } from "@react-navigation/drawer";
 import { useAuth } from "@/context/auth.context";
 import Line from "@/assets/whiteLine.svg";
-import { formatName } from "@/shared/utils/formatName";
+import { formatName, resolveUserDisplayName } from "@/shared/utils/formatName";
 import { Modal } from "@/components/Modal";
 import { router, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,7 +28,7 @@ function drawerIconColor(focused: boolean) {
 const hiddenDrawerItem = { drawerItemStyle: { display: "none" as const } };
 
 export default function DrawerLayout() {
-  const { user: authUser, isAdmin, logout } = useAuth();
+  const { user: authUser, userProfile, isAdmin, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function DrawerLayout() {
           <View className="flex-1 mt-24">
             <View className="p-5 px-7">
               <Text className="text-white font-sans-semibold text-xl">
-                {formatName(authUser?.displayName || "")}
+                {formatName(resolveUserDisplayName(userProfile, authUser?.displayName))}
               </Text>
               <Text className="text-primary font-sans-semibold text-sm">
                 {authUser?.email}

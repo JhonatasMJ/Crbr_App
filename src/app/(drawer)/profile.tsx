@@ -11,7 +11,7 @@ export default function Profile() {
         title="Perfil"
         backHref="/(drawer)"
       />
-      <View className="gap-12 px-6 pt-4 mt-4">
+      <View className="flex-1 px-6 pt-4 mt-4">
         <UpdateUserForm />
       </View>
     </View>

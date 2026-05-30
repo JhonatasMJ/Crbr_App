@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "expo-router";
 import { View } from "react-native";
 import { Text } from "../ui/text";
+import { KeyboardView } from "../KeyboardView";
 import { maskDate } from "@/shared/utils/masks/dateMask";
 
 export function ContactForm({
@@ -16,7 +17,7 @@ export function ContactForm({
   onNext: () => void | Promise<void>;
 }) {
   return (
-    <View className="gap-12">
+    <KeyboardView className="flex-1" contentContainerClassName="gap-12">
       <PhoneInputLabel control={control} name="phoneNumber" label="Telefone" />
       <InputLabel
         control={control}
@@ -43,6 +44,6 @@ export function ContactForm({
           Entrar
         </Link>
       </View>
-    </View>
+    </KeyboardView>
   );
 }

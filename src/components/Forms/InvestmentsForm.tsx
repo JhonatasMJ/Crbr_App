@@ -8,6 +8,7 @@ import { SelectInputLabel } from "../SelectInputLabel";
 import { InvestmentConfirmModal } from "../InvestmentConfirmModal";
 import type { InvestmentConfirmSummary } from "../InvestmentConfirmModal";
 import { Button } from "../ui/button";
+import { KeyboardView } from "../KeyboardView";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
   INVESTMENT_DURATION_OPTIONS,
@@ -19,6 +20,7 @@ import { useInvestments } from "@/context/investments.context";
 import { useAuth } from "@/context/auth.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
 import { serializeInvestmentReceipt } from "@/shared/utils/parseInvestmentReceiptParams";
+import { resolveUserDisplayName } from "@/shared/utils/formatName";
 import { useRouter } from "expo-router";
 import type { Resolver } from "react-hook-form";
 
@@ -31,7 +33,7 @@ const defaultFormValues: InvestmentFormValues = {
 
 export function InvestmentsForm() {
   const { createInvestment } = useInvestments();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { notify } = useSnackBarContext();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -90,7 +92,7 @@ export function InvestmentsForm() {
         pixNumber: confirmSummary.pixNumber,
         startDate: confirmSummary.startDate,
         endDate: confirmSummary.endDate,
-        investorName: user?.displayName ?? undefined,
+        investorName: resolveUserDisplayName(userProfile, user?.displayName) || undefined,
         investorEmail: user?.email ?? undefined,
       });
       setConfirmOpen(false);
@@ -115,7 +117,11 @@ export function InvestmentsForm() {
 
   return (
     <>
-      <View key={formKey} className="gap-8 pb-8">
+      <KeyboardView
+        key={formKey}
+        className="flex-1"
+        contentContainerClassName="gap-8 pb-8"
+      >
         <InputLabel
           control={control}
           name="investmentName"
@@ -161,7 +167,7 @@ export function InvestmentsForm() {
         >
           <Text className="font-sans-bold text-lg">Investir</Text>
         </Button>
-      </View>
+      </KeyboardView>
 
       <InvestmentConfirmModal
         visible={confirmOpen}

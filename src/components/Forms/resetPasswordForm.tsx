@@ -5,6 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Link } from "expo-router";
 
 import { InputLabel } from "../InputLabel";
+import { KeyboardView } from "../KeyboardView";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/auth.context";
 import { resetPasswordSchema } from "@/shared/schemas/resetPasswordSchema";
@@ -54,7 +55,7 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <View className="gap-10 px-6 py-12">
+    <KeyboardView className="flex-1" contentContainerClassName="gap-10 px-6 py-12">
       <InputLabel
         control={control}
         name="email"
@@ -89,6 +90,6 @@ export function ResetPasswordForm() {
           Entrar
         </Link>
       </View>
-    </View>
+    </KeyboardView>
   );
 }

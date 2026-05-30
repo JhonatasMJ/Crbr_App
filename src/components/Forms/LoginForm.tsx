@@ -1,5 +1,6 @@
 import { InputLabel } from "@/components/InputLabel";
 import { InputPassword } from "@/components/InputPassword";
+import { KeyboardView } from "@/components/KeyboardView";
 import { Button } from "@/components/ui/button";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { getPostLoginHref } from "@/shared/utils/authRouting";
@@ -136,7 +137,7 @@ export function LoginForm() {
   }
 
   return (
-    <View className="px-6 py-12 gap-12">
+    <KeyboardView className="flex-1" contentContainerClassName="px-6 py-12 gap-12">
       <InputLabel
         control={control}
         name="email"
@@ -203,6 +204,6 @@ export function LoginForm() {
           Cadastre-se
         </Link>
       </View>
-    </View>
+    </KeyboardView>
   );
 }

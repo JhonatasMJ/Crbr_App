@@ -3,7 +3,9 @@ import { INVESTMENT_STATUS } from "@/shared/constants/investmentStatus";
 import type { InvestmentReceiptData } from "@/types/investmentReceipt";
 import type { InvestmentPendingActionType } from "@/types/investmentPendingAction";
 import type { InvestmentsParams } from "@/types/investmentsParams";
+import type { UserProfile } from "@/types/user";
 import { formatBrDate, formatBrTime } from "@/shared/utils/investmentDates";
+import { resolveUserDisplayName } from "@/shared/utils/formatName";
 
 const REQUEST_STATUS: Record<InvestmentPendingActionType, string> = {
   "withdraw-full": INVESTMENT_STATUS.WAITING_WITHDRAW,
@@ -22,6 +24,7 @@ export function buildInvestmentRequestReceipt(
   actionType: InvestmentPendingActionType,
   amount: number,
   user?: User | null,
+  userProfile?: UserProfile | null,
 ): InvestmentReceiptData {
   const now = new Date();
 
@@ -37,7 +40,7 @@ export function buildInvestmentRequestReceipt(
     paymentMethod: investment.paymentMethod?.trim() || "Pix",
     createdDate: formatBrDate(now),
     createdTime: formatBrTime(now),
-    investorName: user?.displayName ?? undefined,
+    investorName: resolveUserDisplayName(userProfile, user?.displayName) || undefined,
     investorEmail: user?.email ?? undefined,
     receiptKind: "request",
     operationLabel: OPERATION_LABEL[actionType],

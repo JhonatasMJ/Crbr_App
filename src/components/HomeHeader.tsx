@@ -1,5 +1,5 @@
 import { useAuth } from "@/context/auth.context";
-import { getFirstName } from "@/shared/utils/formatName";
+import { getFirstName, resolveUserDisplayName } from "@/shared/utils/formatName";
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { Text, View, Pressable, FlatList, TextInput } from "react-native";
 import {
@@ -19,7 +19,7 @@ import { StatisticCard } from "./StatisticCard";
 import { Button } from "./ui/button";
 
 export function HomeHeader() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const navigation = useNavigation();
   const { notify } = useSnackBarContext();
   const { selectedInvestment, TotalBalance, allInvestments, handleToggleBalance, showData } =
@@ -78,7 +78,7 @@ export function HomeHeader() {
               Olá,
             </Text>
             <Text className="text-secondary font-sans-bold text-xl">
-              {getFirstName(user?.displayName || "")}
+              {getFirstName(resolveUserDisplayName(userProfile, user?.displayName))}
             </Text>
           </View>
           <Logo width={30} />

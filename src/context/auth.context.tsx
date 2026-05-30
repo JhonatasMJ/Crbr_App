@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const uid = userCredential.user.uid;
 
       await set(ref(database, `users/${uid}`), {
-        name: data.name,
+        username: data.name,
         email: data.email,
         cpf: data.cpf,
         phoneNumber: data.phoneNumber,
@@ -215,12 +215,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       await set(ref(database, `users/${user.uid}`), {
         ...userProfile,
-        ...data,
+        username: data.name,
+        phoneNumber: data.phoneNumber,
+        city: data.city,
         email: user.email ?? userProfile?.email,
       });
       setUserProfile((prev) => ({
         ...prev,
-        ...data,
+        username: data.name,
+        phoneNumber: data.phoneNumber,
+        city: data.city,
         email: user.email ?? prev?.email,
       }));
     } catch (error) {

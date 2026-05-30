@@ -2,8 +2,9 @@ import type { User } from "./user";
 
 export type RegisterParams = Pick<
   User,
-  "name" | "email" | "cpf" | "phoneNumber" | "birthDate" | "city"
+  "email" | "cpf" | "phoneNumber" | "birthDate" | "city"
 > & {
+  name: string;
   password: string;
   confirmPassword: string;
 };

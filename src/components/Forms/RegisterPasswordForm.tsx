@@ -2,7 +2,8 @@ import type { Control } from "react-hook-form";
 import type { RegisterParams } from "@/types/registerParams";
 import { Button } from "@/components/ui/button";
 import { InputPassword } from "@/components/InputPassword";
-import { ActivityIndicator, Text, View } from "react-native";
+import { KeyboardView } from "@/components/KeyboardView";
+import { ActivityIndicator, Text } from "react-native";
 
 export function RegisterPasswordForm({
   control,
@@ -14,13 +15,13 @@ export function RegisterPasswordForm({
   isSubmitting: boolean;
 }) {
   return (
-    <View className="gap-10">
-      <InputPassword 
-      control={control} 
-      name="password" 
-      label="Senha" 
-      placeholder="Digite sua senha" 
-      secureTextEntry={true}
+    <KeyboardView className="flex-1" contentContainerClassName="gap-10">
+      <InputPassword
+        control={control}
+        name="password"
+        label="Senha"
+        placeholder="Digite sua senha"
+        secureTextEntry={true}
       />
       <InputPassword
         control={control}
@@ -39,6 +40,6 @@ export function RegisterPasswordForm({
           {isSubmitting ? <ActivityIndicator size="small" color="#111" /> : "Cadastrar"}
         </Text>
       </Button>
-    </View>
+    </KeyboardView>
   );
 }

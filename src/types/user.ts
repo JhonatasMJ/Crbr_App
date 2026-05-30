@@ -1,6 +1,6 @@
 /** Documento `users/{uid}` no Realtime Database (cadastro completo) */
 export type User = {
-  name: string;
+  username: string;
   email: string;
   cpf: string;
   phoneNumber: string;
@@ -10,6 +10,12 @@ export type User = {
 };
 
 /** Dados lidos do RTDB (podem estar incompletos) */
-export type UserProfile = Partial<User>;
+export type UserProfile = Partial<User> & {
+  /** Campo legado — contas antigas podem ter sido salvas como `name` */
+  name?: string;
+};
+
 /** Campos editáveis na tela de perfil */
-export type UserUpdatePayload = Pick<User, "name" | "phoneNumber" | "city">;
+export type UserUpdatePayload = Pick<User, "phoneNumber" | "city"> & {
+  name: string;
+};
