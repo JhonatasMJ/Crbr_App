@@ -21,6 +21,10 @@ import {
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
 import { get, ref, set } from "firebase/database";
+import { isCpfAlreadyRegistered } from "@/shared/services/checkCpfAvailability";
+import { isEmailAlreadyRegistered } from "@/shared/services/checkEmailAvailability";
+import { normalizeCpf } from "@/shared/utils/cpf";
+import { encodeEmailKey, normalizeEmail } from "@/shared/utils/email";
 import * as SecureStore from "expo-secure-store";
 import { LoginParams } from "@/types/loginParams";
 import { useSnackBarContext } from "./snackbar.context";
@@ -113,9 +117,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       try {
         const snap = await get(ref(database, `users/${fbUser.uid}`));
-        setUserProfile(
-          snap.exists() ? (snap.val() as UserProfile) : null,
-        );
+        if (snap.exists()) {
+          const profile = snap.val() as UserProfile;
+          const cpf = normalizeCpf(profile.cpf ?? "");
+          if (cpf) {
+            await set(ref(database, `cpfIndex/${cpf}`), fbUser.uid);
+          }
+          const email = normalizeEmail(profile.email ?? fbUser.email ?? "");
+          if (email) {
+            await set(ref(database, `emailIndex/${encodeEmailKey(email)}`), fbUser.uid);
+          }
+          setUserProfile(profile);
+        } else {
+          setUserProfile(null);
+        }
       } catch (e) {
         console.error(e);
         setUserProfile(null);
@@ -131,9 +146,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
 
+      const cpf = normalizeCpf(data.cpf);
+      const email = normalizeEmail(data.email);
+
+      if (await isCpfAlreadyRegistered(cpf)) {
+        notify({
+          message: "Já existe uma conta cadastrada com este CPF",
+          messageType: "ERROR",
+        });
+        throw new Error("CPF_ALREADY_REGISTERED");
+      }
+
+      if (await isEmailAlreadyRegistered(email)) {
+        notify({
+          message: "Já existe uma conta cadastrada com este e-mail",
+          messageType: "ERROR",
+        });
+        throw new Error("EMAIL_ALREADY_REGISTERED");
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        data.email,
+        email,
         data.password,
       );
 
@@ -141,15 +175,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       await set(ref(database, `users/${uid}`), {
         username: data.name,
-        email: data.email,
-        cpf: data.cpf,
+        email,
+        cpf,
         phoneNumber: data.phoneNumber,
         birthDate: data.birthDate,
         city: data.city,
         createdAt: new Date().toISOString(),
       });
-    } catch (error) {
+
+      await set(ref(database, `cpfIndex/${cpf}`), uid);
+      await set(ref(database, `emailIndex/${encodeEmailKey(email)}`), uid);
+    } catch (error: unknown) {
       console.error(error);
+
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? String((error as { code: string }).code)
+          : "";
+
+      if (code === "auth/email-already-in-use") {
+        notify({
+          message: "Já existe uma conta cadastrada com este e-mail",
+          messageType: "ERROR",
+        });
+      } else if (code === "auth/weak-password") {
+        notify({
+          message: "Senha muito fraca. Use pelo menos 6 caracteres.",
+          messageType: "ERROR",
+        });
+      } else if (code === "auth/invalid-email") {
+        notify({
+          message: "E-mail inválido.",
+          messageType: "ERROR",
+        });
+      } else if (
+        error instanceof Error &&
+        (error.message === "CPF_ALREADY_REGISTERED" ||
+          error.message === "EMAIL_ALREADY_REGISTERED")
+      ) {
+        /* já notificado acima */
+      } else {
+        notify({
+          message: "Não foi possível criar a conta. Tente novamente.",
+          messageType: "ERROR",
+        });
+      }
+
       throw error;
     } finally {
       setLoading(false);

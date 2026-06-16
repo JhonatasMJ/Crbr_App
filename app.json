@@ -2,8 +2,8 @@
   "expo": {
     "name": "CRBR Investimentos",
     "slug": "CRBR",
-    "version": "1.2.2",
-    "runtimeVersion": "1.2.2",
+    "version": "1.2.3",
+    "runtimeVersion": "1.2.3",
     "splash": {
       "image": "./assets/images/logo.png",
       "resizeMode": "contain",
