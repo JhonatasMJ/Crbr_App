@@ -12,22 +12,11 @@ buildscript {
   }
 }
 
-def asyncStorageLocalMaven = uri("${rootDir}/../node_modules/@react-native-async-storage/async-storage/android/local_repo")
-
 allprojects {
   repositories {
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
-    // Async Storage 3.x — storage-android:1.0.0 não está no Maven Central
-    maven { url = asyncStorageLocalMaven }
-  }
-}
-
-// Módulos com `repositories {}` próprio ignoram allprojects (RN 0.81+)
-subprojects { subproject ->
-  subproject.repositories {
-    maven { url = asyncStorageLocalMaven }
   }
 }
 
