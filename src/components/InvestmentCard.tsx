@@ -1,7 +1,8 @@
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { getInvestmentProgressInfo } from "@/shared/utils/calculateInvestmentIncome";
 import { getInvestmentStatusLabel, isInvestmentActive } from "@/shared/constants/investmentStatus";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { Pressable } from "react-native-gesture-handler";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Progress } from "./ui/progress";
 import { INVESTMENT_CARD_STYLE, InvestmentCardVariant } from "@/shared/strategies/investment-card";
@@ -50,6 +51,8 @@ export function InvestmentCard({
   return (
     <View className="mt-4 w-full px-6">
       <Swipeable
+        activeOffsetX={[-24, 24]}
+        failOffsetY={[-12, 12]}
         containerStyle={{
           overflow: "visible",
           width: "100%",
@@ -59,7 +62,7 @@ export function InvestmentCard({
           <RightAction investmentId={investmentId} />
         )}
       >
-        <Pressable onPress={onPress}>
+        <Pressable onPress={onPress} android_disableSound>
           <View className={`rounded-md p-4 ${style.containerBg}`}>
             <View className="flex-row items-start justify-between gap-2">
               <Text

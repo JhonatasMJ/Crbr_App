@@ -7,9 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import BottomSheet, {
-  BottomSheetScrollView,
-} from "@gorhom/bottom-sheet";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { View } from "react-native";
 import { TouchableWithoutFeedback } from "react-native";
 export const BottomSheetContext = createContext({} as BottomSheetContextType);
@@ -70,6 +68,9 @@ export const BottomSheetProvider = ({ children }: { children: ReactNode }) => {
         style={{ zIndex: 2 }}
         index={index}
         enablePanDownToClose
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
         backgroundStyle={{
           backgroundColor: "#000",
           borderTopLeftRadius: 32,
@@ -77,7 +78,7 @@ export const BottomSheetProvider = ({ children }: { children: ReactNode }) => {
           elevation: 9,
         }}
       >
-        <BottomSheetScrollView>{content}</BottomSheetScrollView>
+        {content}
       </BottomSheet>
     </BottomSheetContext.Provider>
   );

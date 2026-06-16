@@ -14,6 +14,7 @@ type KeyboardViewProps = {
   className?: string;
   contentContainerClassName?: string;
   scrollable?: boolean;
+  extraScrollHeight?: number;
 };
 
 export function KeyboardView({
@@ -21,14 +22,18 @@ export function KeyboardView({
   className,
   contentContainerClassName,
   scrollable = true,
+  extraScrollHeight,
 }: KeyboardViewProps) {
+  const scrollOffset =
+    extraScrollHeight ?? (Platform.OS === "android" ? 100 : 32);
+
   const scrollContent = (
     <KeyboardAwareScrollView
       enableOnAndroid
       enableAutomaticScroll
       enableResetScrollToCoords={false}
-      extraScrollHeight={Platform.OS === "android" ? 100 : 32}
-      extraHeight={Platform.OS === "android" ? 100 : 32}
+      extraScrollHeight={scrollOffset}
+      extraHeight={scrollOffset}
       keyboardOpeningTime={0}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}

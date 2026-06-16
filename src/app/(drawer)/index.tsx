@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { FlatList, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, type Href } from "expo-router";
 import { useAuth } from "@/context/auth.context";
 import { isAdminEmail } from "@/shared/constants/admin";
@@ -43,6 +44,7 @@ function InvestmentRowSeparator() {
 
 export default function Home() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const { investments, selectedInvestment, selectInvestment, loading } =
     useInvestments();
 
@@ -66,11 +68,14 @@ export default function Home() {
         ListHeaderComponent={<HomeListHeader />}
         renderItem={({ item }) => {
           const card = investmentToCardItem(item);
+          const investmentId = item.id ?? "";
           return (
             <InvestmentCard
-              investmentId={item.id ?? ""}
+              investmentId={investmentId}
               selected={selectedInvestment?.id === item.id}
-              onPress={() => selectInvestment(item.id)}
+              onPress={() => {
+                if (investmentId) selectInvestment(investmentId);
+              }}
               name={card.name ?? "Investimento"}
               amount={card.amount}
               status={item.status}
@@ -81,7 +86,11 @@ export default function Home() {
           );
         }}
         ItemSeparatorComponent={InvestmentRowSeparator}
-        ListFooterComponent={<View className="h-8" />}
+        contentContainerStyle={{
+          paddingBottom: Math.max(insets.bottom, 16) + 24,
+        }}
+        nestedScrollEnabled
+        removeClippedSubviews={false}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       />

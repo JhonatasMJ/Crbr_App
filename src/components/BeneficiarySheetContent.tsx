@@ -1,4 +1,5 @@
 import { BeneficiaryForm } from "@/components/Forms/BeneficiaryForm";
+import { KeyboardView } from "@/components/KeyboardView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useBeneficiary } from "@/context/beneficiary.context";
@@ -14,7 +15,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { View } from "react-native";
-
 type BeneficiarySheetContentProps = {
   maxPercentage: number;
   beneficiaryToEdit?: Beneficiary | null;
@@ -89,7 +89,7 @@ export function BeneficiarySheetContent({
   const isEdit = Boolean(beneficiaryToEdit);
 
   return (
-    <View className="px-6 pb-8 pt-2">
+    <KeyboardView contentContainerClassName="px-6 pb-8 pt-2" extraScrollHeight={140}>
       <Text className="mb-4 font-sans-bold text-xl text-white">
         {isEdit ? "Editar beneficiário" : "Adicionar beneficiário"}
       </Text>
@@ -116,6 +116,6 @@ export function BeneficiarySheetContent({
           </Text>
         </Button>
       </View>
-    </View>
+    </KeyboardView>
   );
 }
