@@ -25,6 +25,7 @@
     "@rn-primitives/select": "^1.4.0",
     "@rn-primitives/slot": "^1.4.0",
     "@rn-primitives/tabs": "^1.2.0",
+    "babel-preset-expo": "~54.0.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cpf-cnpj-validator": "^2.1.2",
