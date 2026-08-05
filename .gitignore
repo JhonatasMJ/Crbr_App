@@ -16,6 +16,9 @@ web-build/
 *.key
 *.mobileprovision
 
+# Android build artifacts (incl. autolinking cache com paths locais)
+android/build/
+
 # Metro
 .metro-health-check*
 

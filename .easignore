@@ -1,0 +1,3 @@
+# Não enviar cache local de build Android para o EAS
+android/build/
+android/.gradle/
