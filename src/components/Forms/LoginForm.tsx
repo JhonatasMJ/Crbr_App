@@ -3,7 +3,7 @@ import { InputPassword } from "@/components/InputPassword";
 import { KeyboardView } from "@/components/KeyboardView";
 import { Button } from "@/components/ui/button";
 import { Link, router, useLocalSearchParams } from "expo-router";
-import { getPostLoginHref } from "@/shared/utils/authRouting";
+import { getPostAuthHref } from "@/shared/utils/authRouting";
 import { isBiometricLoginAvailable } from "@/shared/utils/biometricAuth";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -51,23 +51,12 @@ export function LoginForm() {
 
     setBiometricLoading(true);
     try {
-      const success = await tryBiometricRememberedLogin();
-      if (success) {
-        const saved = await getRememberedLogin();
-        router.replace(
-          getPostLoginHref(saved?.email ?? "", userProfile?.email),
-        );
-      }
-      return success;
+      /* sucesso dispara onAuthStateChanged; o effect de user redireciona */
+      return await tryBiometricRememberedLogin();
     } finally {
       setBiometricLoading(false);
     }
-  }, [
-    biometricLoading,
-    getRememberedLogin,
-    tryBiometricRememberedLogin,
-    userProfile?.email,
-  ]);
+  }, [biometricLoading, tryBiometricRememberedLogin]);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,9 +82,7 @@ export function LoginForm() {
           try {
             const success = await tryBiometricRememberedLogin();
             if (cancelled || !success) return;
-            router.replace(
-              getPostLoginHref(saved.email, userProfile?.email),
-            );
+            /* user atualiza via onAuthStateChanged; o effect abaixo redireciona */
           } finally {
             if (!cancelled) setBiometricLoading(false);
           }
@@ -112,20 +99,26 @@ export function LoginForm() {
     getRememberedLogin,
     skipBiometric,
     tryBiometricRememberedLogin,
-    userProfile?.email,
   ]);
 
   useEffect(() => {
-    if (user) {
-      router.replace(getPostLoginHref(user.email, userProfile?.email));
+    if (user && user.emailVerified && userProfile) {
+      router.replace(getPostAuthHref(user, userProfile?.email, true));
     }
-  }, [user, userProfile?.email]);
+  }, [user, userProfile]);
 
   async function handleLogin(data: LoginParams) {
     try {
       await loginWithRemember(data, remember);
-      router.replace(getPostLoginHref(data.email));
-    } catch {}
+      /* redirecionamento pelo effect quando user atualizar */
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "EMAIL_NOT_VERIFIED"
+      ) {
+        router.replace("/(auth)/verifyEmail");
+      }
+    }
   }
 
   function handleRememberChange(next: boolean) {

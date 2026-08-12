@@ -28,19 +28,29 @@ function drawerIconColor(focused: boolean) {
 const hiddenDrawerItem = { drawerItemStyle: { display: "none" as const } };
 
 export default function DrawerLayout() {
-  const { user: authUser, userProfile, isAdmin, logout } = useAuth();
+  const { user: authUser, userProfile, isAdmin, logout, isEmailVerified } =
+    useAuth();
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (!isAdmin) return;
-    router.replace("/admin" as Href);
-  }, [isAdmin]);
+    if (!authUser) {
+      router.replace("/(auth)/login");
+      return;
+    }
+    if (!isEmailVerified || !userProfile) {
+      router.replace("/(auth)/verifyEmail" as Href);
+      return;
+    }
+    if (isAdmin) {
+      router.replace("/admin" as Href);
+    }
+  }, [authUser, isEmailVerified, userProfile, isAdmin]);
 
   async function handleLogout() {
     await logout();
   }
 
-  if (isAdmin) {
+  if (!authUser || !isEmailVerified || !userProfile || isAdmin) {
     return <View className="flex-1 bg-background" />;
   }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,10 +18,12 @@ import {
   CheckCircle,
   Circle,
 } from "lucide-react-native";
+import { router, type Href } from "expo-router";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
+import { getPostAuthHref } from "@/shared/utils/authRouting";
 
 interface Expense {
   id: string;
@@ -42,7 +44,7 @@ interface FinancialGoal {
 }
 
 export default function AdminScreen() {
-  const { logout } = useAuth();
+  const { logout, user, userProfile, isEmailVerified, isAdmin } = useAuth();
   const { notify } = useSnackBarContext();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
@@ -53,6 +55,20 @@ export default function AdminScreen() {
   const [activeTab, setActiveTab] = useState<"expenses" | "goals" | "dashboard">(
     "dashboard",
   );
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/(auth)/login");
+      return;
+    }
+    if (!isEmailVerified || !userProfile) {
+      router.replace("/(auth)/verifyEmail" as Href);
+      return;
+    }
+    if (!isAdmin) {
+      router.replace(getPostAuthHref(user, userProfile?.email, true));
+    }
+  }, [user, userProfile, isEmailVerified, isAdmin]);
 
   async function handleSignOut() {
     try {

@@ -8,16 +8,15 @@ node_modules/
 dist/
 web-build/
 
-# Native
+# Native (gerados por prebuild — projeto Expo managed)
+android/
+ios/
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
-
-# Android build artifacts (incl. autolinking cache com paths locais)
-android/build/
 
 # Metro
 .metro-health-check*

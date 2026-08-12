@@ -5,4 +5,5 @@ export type HeaderProps = {
   title: string;
   logo?: boolean;
   backHref?: Href;
+  onBack?: () => void;
 };

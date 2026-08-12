@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth.context";
-import { getPostLoginHref } from "@/shared/utils/authRouting";
+import { getPostAuthHref } from "@/shared/utils/authRouting";
 
 /* Carousel de boas-vindas — desativado
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,9 @@ export default function Index() {
     if (initializing) return;
 
     if (user) {
-      router.replace(getPostLoginHref(user.email, userProfile?.email));
+      router.replace(
+        getPostAuthHref(user, userProfile?.email, Boolean(userProfile)),
+      );
       return;
     }
 

@@ -1,5 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
@@ -12,7 +12,7 @@ import { registerFullSchema } from "@/shared/schemas/registerFullSchema";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useAuth } from "@/context/auth.context";
 import { router } from "expo-router";
-import { getPostLoginHref } from "@/shared/utils/authRouting";
+
 const steps = ["account", "contact", "password"] as const;
 
 const STEP_ORDER: Record<(typeof steps)[number], number> = {
@@ -22,7 +22,7 @@ const STEP_ORDER: Record<(typeof steps)[number], number> = {
 };
 
 export default function Register() {
-  const { register, loading, user } = useAuth();
+  const { register, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<(typeof steps)[number]>("account");
 
   const {
@@ -87,17 +87,20 @@ export default function Register() {
     await handleTabChange("password");
   }
 
-  /* Redireciona para a tela de login se o usuário estiver logado */
-  useEffect(() => {
-    if (user) {
-      router.replace(getPostLoginHref(user.email));
-    }
-  }, [user]);
-
-  /* Função para enviar o cadastro completo */
   async function submitAll(payload: RegisterParams) {
-    await register(payload);
+    try {
+      await register(payload);
+      router.replace("/(auth)/verifyEmail");
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "ALREADY_VERIFIED_NEEDS_LOGIN"
+      ) {
+        router.replace("/(auth)/login");
+      }
+    }
   }
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">

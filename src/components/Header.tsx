@@ -7,8 +7,12 @@ import { ChevronLeft } from "lucide-react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export function Header({ span, title, logo = true, backHref }: HeaderProps) {
+export function Header({ span, title, logo = true, backHref, onBack }: HeaderProps) {
   function handleBack() {
+    if (onBack) {
+      onBack();
+      return;
+    }
     if (backHref) {
       router.replace(backHref);
       return;

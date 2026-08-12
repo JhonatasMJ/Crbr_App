@@ -18,6 +18,7 @@ import {
   signOut,
   updateProfile,
   sendPasswordResetEmail,
+  sendEmailVerification,
 } from "firebase/auth";
 import { auth, database } from "@/shared/services/firebase";
 import { get, ref, set } from "firebase/database";
@@ -30,6 +31,14 @@ import { LoginParams } from "@/types/loginParams";
 import { useSnackBarContext } from "./snackbar.context";
 import type { UserProfile, UserUpdatePayload } from "@/types/user";
 import { authenticateWithBiometric } from "@/shared/utils/biometricAuth";
+import {
+  clearPendingRegistration,
+  getPendingRegistration,
+  persistPendingRegistration,
+  toPendingRegistration,
+  type PendingRegistration,
+} from "@/shared/utils/pendingRegistration";
+import { VERIFY_EMAIL_HREF } from "@/shared/utils/authRouting";
 
 const REMEMBERED_LOGIN_SECURE_KEY = "crbr_remembered_login";
 
@@ -75,13 +84,45 @@ async function persistRememberedLogin(data: LoginParams): Promise<void> {
   );
 }
 
+async function writeAppProfile(
+  uid: string,
+  pending: PendingRegistration,
+): Promise<UserProfile> {
+  const profile: UserProfile = {
+    username: pending.name,
+    email: pending.email,
+    cpf: pending.cpf,
+    phoneNumber: pending.phoneNumber,
+    birthDate: pending.birthDate,
+    city: pending.city,
+    createdAt: new Date().toISOString(),
+  };
+
+  await set(ref(database, `users/${uid}`), profile);
+  await set(ref(database, `cpfIndex/${pending.cpf}`), uid);
+  await set(
+    ref(database, `emailIndex/${encodeEmailKey(pending.email)}`),
+    uid,
+  );
+
+  return profile;
+}
+
+function getFirebaseErrorCode(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) {
+    return String((error as { code: string }).code);
+  }
+  return "";
+}
+
 type AuthContextType = {
-  register: (data: RegisterParams) => Promise<void>;
+  register: (data: RegisterParams) => Promise<string>;
   loading: boolean;
   initializing: boolean;
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   isAdmin: boolean;
+  isEmailVerified: boolean;
   login: (data: LoginParams) => Promise<void>;
   loginWithRemember: (data: LoginParams, remember: boolean) => Promise<void>;
   tryBiometricRememberedLogin: () => Promise<boolean>;
@@ -90,6 +131,9 @@ type AuthContextType = {
   logout: () => Promise<void>;
   updateUser: (data: UserUpdatePayload) => Promise<void>;
   resetPassword: (email: string) => Promise<string>;
+  resendEmailVerification: () => Promise<void>;
+  completeRegistrationAfterEmailVerification: () => Promise<boolean>;
+  getPendingRegistrationEmail: () => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -106,7 +150,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [user?.email, userProfile?.email],
   );
 
-  /* Faz Login automatico */
+  const isEmailVerified = Boolean(user?.emailVerified);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setUser(fbUser);
@@ -125,7 +170,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           const email = normalizeEmail(profile.email ?? fbUser.email ?? "");
           if (email) {
-            await set(ref(database, `emailIndex/${encodeEmailKey(email)}`), fbUser.uid);
+            await set(
+              ref(database, `emailIndex/${encodeEmailKey(email)}`),
+              fbUser.uid,
+            );
           }
           setUserProfile(profile);
         } else {
@@ -142,14 +190,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return unsubscribe;
   }, []);
 
-  async function register(data: RegisterParams) {
+  /**
+   * Inicia o cadastro: cria o usuário Auth (necessário para o e-mail do Firebase),
+   * envia a confirmação e encerra a sessão. O perfil no app só é gravado após confirmar.
+   */
+  async function register(data: RegisterParams): Promise<string> {
     try {
       setLoading(true);
 
-      const cpf = normalizeCpf(data.cpf);
-      const email = normalizeEmail(data.email);
+      const pending = toPendingRegistration(data);
 
-      if (await isCpfAlreadyRegistered(cpf)) {
+      if (await isCpfAlreadyRegistered(pending.cpf)) {
         notify({
           message: "Já existe uma conta cadastrada com este CPF",
           messageType: "ERROR",
@@ -157,7 +208,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("CPF_ALREADY_REGISTERED");
       }
 
-      if (await isEmailAlreadyRegistered(email)) {
+      if (await isEmailAlreadyRegistered(pending.email)) {
         notify({
           message: "Já existe uma conta cadastrada com este e-mail",
           messageType: "ERROR",
@@ -165,40 +216,110 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("EMAIL_ALREADY_REGISTERED");
       }
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        data.password,
-      );
+      try {
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          pending.email,
+          pending.password,
+        );
+        await sendEmailVerification(credential.user);
+      } catch (error: unknown) {
+        const code = getFirebaseErrorCode(error);
 
-      const uid = userCredential.user.uid;
+        if (code === "auth/email-already-in-use") {
+          try {
+            const existing = await signInWithEmailAndPassword(
+              auth,
+              pending.email,
+              pending.password,
+            );
+            await existing.user.reload();
 
-      await set(ref(database, `users/${uid}`), {
-        username: data.name,
-        email,
-        cpf,
-        phoneNumber: data.phoneNumber,
-        birthDate: data.birthDate,
-        city: data.city,
-        createdAt: new Date().toISOString(),
+            if (existing.user.emailVerified) {
+              const snap = await get(ref(database, `users/${existing.user.uid}`));
+              if (snap.exists()) {
+                await signOut(auth);
+                notify({
+                  message: "Já existe uma conta cadastrada com este e-mail",
+                  messageType: "ERROR",
+                });
+                throw new Error("EMAIL_ALREADY_REGISTERED");
+              }
+              await writeAppProfile(existing.user.uid, pending);
+              await clearPendingRegistration();
+              await signOut(auth);
+              notify({
+                message: "E-mail já confirmado. Faça login para continuar.",
+                messageType: "SUCCESS",
+              });
+              throw new Error("ALREADY_VERIFIED_NEEDS_LOGIN");
+            }
+
+            await sendEmailVerification(existing.user);
+          } catch (inner: unknown) {
+            if (
+              inner instanceof Error &&
+              (inner.message === "EMAIL_ALREADY_REGISTERED" ||
+                inner.message === "ALREADY_VERIFIED_NEEDS_LOGIN")
+            ) {
+              throw inner;
+            }
+
+            const innerCode = getFirebaseErrorCode(inner);
+            if (
+              innerCode === "auth/invalid-credential" ||
+              innerCode === "auth/wrong-password" ||
+              innerCode === "auth/user-not-found"
+            ) {
+              notify({
+                message: "Já existe uma conta cadastrada com este e-mail",
+                messageType: "ERROR",
+              });
+              throw new Error("EMAIL_ALREADY_REGISTERED");
+            }
+            throw inner;
+          }
+        } else {
+          throw error;
+        }
+      }
+
+      await persistPendingRegistration(pending);
+      await signOut(auth);
+      setUser(null);
+      setUserProfile(null);
+
+      notify({
+        message: "E-mail de confirmação enviado.",
+        messageType: "SUCCESS",
       });
 
-      await set(ref(database, `cpfIndex/${cpf}`), uid);
-      await set(ref(database, `emailIndex/${encodeEmailKey(email)}`), uid);
+      return pending.email;
     } catch (error: unknown) {
       console.error(error);
 
-      const code =
-        error && typeof error === "object" && "code" in error
-          ? String((error as { code: string }).code)
-          : "";
+      if (auth.currentUser) {
+        try {
+          await signOut(auth);
+        } catch {
+          /* ignore */
+        }
+        setUser(null);
+        setUserProfile(null);
+      }
 
-      if (code === "auth/email-already-in-use") {
-        notify({
-          message: "Já existe uma conta cadastrada com este e-mail",
-          messageType: "ERROR",
-        });
-      } else if (code === "auth/weak-password") {
+      const code = getFirebaseErrorCode(error);
+
+      if (
+        error instanceof Error &&
+        (error.message === "CPF_ALREADY_REGISTERED" ||
+          error.message === "EMAIL_ALREADY_REGISTERED" ||
+          error.message === "ALREADY_VERIFIED_NEEDS_LOGIN")
+      ) {
+        throw error;
+      }
+
+      if (code === "auth/weak-password") {
         notify({
           message: "Senha muito fraca. Use pelo menos 6 caracteres.",
           messageType: "ERROR",
@@ -208,15 +329,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           message: "E-mail inválido.",
           messageType: "ERROR",
         });
-      } else if (
-        error instanceof Error &&
-        (error.message === "CPF_ALREADY_REGISTERED" ||
-          error.message === "EMAIL_ALREADY_REGISTERED")
-      ) {
-        /* já notificado acima */
+      } else if (code === "auth/too-many-requests") {
+        notify({
+          message:
+            "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+          messageType: "ERROR",
+        });
+      } else if (code === "auth/email-already-in-use") {
+        notify({
+          message: "Já existe uma conta cadastrada com este e-mail",
+          messageType: "ERROR",
+        });
       } else {
         notify({
-          message: "Não foi possível criar a conta. Tente novamente.",
+          message: "Não foi possível iniciar o cadastro. Tente novamente.",
           messageType: "ERROR",
         });
       }
@@ -227,15 +353,238 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function getPendingRegistrationEmail(): Promise<string | null> {
+    const pending = await getPendingRegistration();
+    return pending?.email ?? null;
+  }
+
+  async function resendEmailVerification() {
+    const pending = await getPendingRegistration();
+    if (!pending) {
+      notify({
+        message: "Sessão de cadastro expirada. Cadastre-se novamente.",
+        messageType: "ERROR",
+      });
+      throw new Error("NO_PENDING_REGISTRATION");
+    }
+
+    try {
+      setLoading(true);
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        pending.email,
+        pending.password,
+      );
+      await sendEmailVerification(credential.user);
+      await signOut(auth);
+      setUser(null);
+      setUserProfile(null);
+      notify({
+        message: "E-mail de confirmação reenviado.",
+        messageType: "SUCCESS",
+      });
+    } catch (error: unknown) {
+      console.error(error);
+      if (auth.currentUser) {
+        try {
+          await signOut(auth);
+        } catch {
+          /* ignore */
+        }
+      }
+      setUser(null);
+      setUserProfile(null);
+
+      const code = getFirebaseErrorCode(error);
+      if (code === "auth/too-many-requests") {
+        notify({
+          message:
+            "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+          messageType: "ERROR",
+        });
+      } else {
+        notify({
+          message: "Não foi possível reenviar o e-mail. Tente novamente.",
+          messageType: "ERROR",
+        });
+      }
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** Confirma o e-mail, cria o perfil no app e mantém o usuário logado. */
+  async function completeRegistrationAfterEmailVerification(): Promise<boolean> {
+    const pending = await getPendingRegistration();
+    if (!pending || !pending.cpf || !pending.name) {
+      notify({
+        message: "Sessão de cadastro expirada. Cadastre-se novamente.",
+        messageType: "ERROR",
+      });
+      throw new Error("NO_PENDING_REGISTRATION");
+    }
+
+    try {
+      setLoading(true);
+
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        pending.email,
+        pending.password,
+      );
+      await credential.user.reload();
+
+      if (!credential.user.emailVerified) {
+        await signOut(auth);
+        setUser(null);
+        setUserProfile(null);
+        notify({
+          message:
+            "E-mail ainda não confirmado.",
+          messageType: "ERROR",
+        });
+        return false;
+      }
+
+      const uid = credential.user.uid;
+      const snap = await get(ref(database, `users/${uid}`));
+      let profile: UserProfile;
+
+      if (snap.exists()) {
+        profile = snap.val() as UserProfile;
+      } else {
+        if (await isCpfAlreadyRegistered(pending.cpf)) {
+          await signOut(auth);
+          setUser(null);
+          setUserProfile(null);
+          notify({
+            message: "Já existe uma conta cadastrada com este CPF",
+            messageType: "ERROR",
+          });
+          throw new Error("CPF_ALREADY_REGISTERED");
+        }
+        profile = await writeAppProfile(uid, pending);
+      }
+
+      await clearPendingRegistration();
+      setUser({ ...credential.user } as FirebaseUser);
+      setUserProfile(profile);
+
+      notify({
+        message: "Conta criada com sucesso!",
+        messageType: "SUCCESS",
+      });
+      return true;
+    } catch (error: unknown) {
+      console.error(error);
+      if (auth.currentUser) {
+        try {
+          await signOut(auth);
+        } catch {
+          /* ignore */
+        }
+      }
+      setUser(null);
+      setUserProfile(null);
+
+      if (
+        error instanceof Error &&
+        error.message === "CPF_ALREADY_REGISTERED"
+      ) {
+        throw error;
+      }
+
+      const code = getFirebaseErrorCode(error);
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+        notify({
+          message: "Sessão de cadastro inválida. Cadastre-se novamente.",
+          messageType: "ERROR",
+        });
+      } else {
+        notify({
+          message: "Não foi possível concluir o cadastro. Tente novamente.",
+          messageType: "ERROR",
+        });
+      }
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function login({ email, password }: LoginParams) {
     try {
       setLoading(true);
-  
-      await signInWithEmailAndPassword(auth, email, password);
-  
-    } catch (error: any) {
-     /* Tratamento de erros do Firebase, NOTIFY É DA SNACKBAR */
-      if (error.code === "auth/invalid-credential") {
+
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        normalizeEmail(email),
+        password,
+      );
+      await credential.user.reload();
+
+      if (!credential.user.emailVerified) {
+        const pending = await getPendingRegistration();
+        if (
+          !pending ||
+          normalizeEmail(pending.email) !== normalizeEmail(email)
+        ) {
+          await persistPendingRegistration({
+            name: credential.user.displayName ?? "",
+            email: normalizeEmail(email),
+            cpf: "",
+            phoneNumber: "",
+            birthDate: "",
+            city: "",
+            password,
+          });
+        } else {
+          await persistPendingRegistration({ ...pending, password });
+        }
+
+        await signOut(auth);
+        setUser(null);
+        setUserProfile(null);
+        notify({
+          message: "E-mail ainda não confirmado.",
+          messageType: "ERROR",
+        });
+        throw new Error("EMAIL_NOT_VERIFIED");
+      }
+
+      const snap = await get(ref(database, `users/${credential.user.uid}`));
+      if (!snap.exists()) {
+        const pending = await getPendingRegistration();
+        if (
+          pending &&
+          normalizeEmail(pending.email) === normalizeEmail(email) &&
+          pending.cpf
+        ) {
+          await writeAppProfile(credential.user.uid, pending);
+          await clearPendingRegistration();
+          return;
+        }
+
+        await signOut(auth);
+        setUser(null);
+        setUserProfile(null);
+        notify({
+          message: "Conta incompleta. Finalize a confirmação do e-mail.",
+          messageType: "ERROR",
+        });
+        throw new Error("EMAIL_NOT_VERIFIED");
+      }
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "EMAIL_NOT_VERIFIED"
+      ) {
+        throw error;
+      }
+
+      const code = getFirebaseErrorCode(error);
+      if (code === "auth/invalid-credential") {
         notify({
           message: "Email ou senha inválidos",
           messageType: "ERROR",
@@ -244,10 +593,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         notify({
           message: "Erro ao fazer login",
           messageType: "ERROR",
-          });
+        });
       }
-  
-      throw error; 
+
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -272,7 +621,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await login(remembered);
       return true;
-    } catch {
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === "EMAIL_NOT_VERIFIED"
+      ) {
+        router.replace(VERIFY_EMAIL_HREF);
+      }
       return false;
     }
   }
@@ -300,12 +655,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }));
     } catch (error) {
       console.error(error);
-      throw error; 
+      throw error;
     } finally {
       setLoading(false);
     }
   }
-  /* Faz Logout */
+
   async function logout() {
     try {
       setLoading(true);
@@ -331,16 +686,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return normalizedEmail;
     } catch (error: unknown) {
       console.error(error);
-      const code =
-        error && typeof error === "object" && "code" in error
-          ? String((error as { code: string }).code)
-          : "";
+      const code = getFirebaseErrorCode(error);
 
       if (code === "auth/invalid-email") {
         notify({ message: "E-mail inválido.", messageType: "ERROR" });
       } else if (code === "auth/too-many-requests") {
         notify({
-          message: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+          message:
+            "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
           messageType: "ERROR",
         });
       } else {
@@ -356,7 +709,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-
   return (
     <AuthContext.Provider
       value={{
@@ -366,6 +718,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         userProfile,
         isAdmin,
+        isEmailVerified,
         login,
         loginWithRemember,
         tryBiometricRememberedLogin,
@@ -374,6 +727,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         updateUser,
         resetPassword,
+        resendEmailVerification,
+        completeRegistrationAfterEmailVerification,
+        getPendingRegistrationEmail,
       }}
     >
       {children}
@@ -381,7 +737,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-/* Hook para usar o AuthContext */
 export function useAuth() {
   const context = useContext(AuthContext);
 
