@@ -3,6 +3,7 @@ import { Drawer } from "expo-router/drawer";
 import {
   CreditCard,
   DollarSign,
+  FileText,
   User as UserIcon,
   Users,
   LogOut,
@@ -163,6 +164,16 @@ export default function DrawerLayout() {
           title: "Beneficiários",
           drawerIcon: ({ focused, size }) => (
             <Users size={size} color={drawerIconColor(focused)} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="terms"
+        options={{
+          title: "Termos",
+          drawerIcon: ({ focused, size }) => (
+            <FileText size={size} color={drawerIconColor(focused)} />
           ),
         }}
       />
