@@ -32,6 +32,10 @@ import { useSnackBarContext } from "./snackbar.context";
 import type { UserProfile, UserUpdatePayload } from "@/types/user";
 import { authenticateWithBiometric } from "@/shared/utils/biometricAuth";
 import {
+  registerForPushNotificationsAsync,
+  unregisterPushNotificationsAsync,
+} from "@/shared/services/notifications";
+import {
   clearPendingRegistration,
   getPendingRegistration,
   persistPendingRegistration,
@@ -176,6 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             );
           }
           setUserProfile(profile);
+          void registerForPushNotificationsAsync(fbUser.uid);
         } else {
           setUserProfile(null);
         }
@@ -665,6 +670,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       await clearRememberedLogin();
+      if (auth.currentUser) {
+        await unregisterPushNotificationsAsync(auth.currentUser.uid);
+      }
       await signOut(auth);
       setUser(null);
       setUserProfile(null);
