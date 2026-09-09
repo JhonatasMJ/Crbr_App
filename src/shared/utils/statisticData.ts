@@ -39,8 +39,8 @@ export function getHeaderStatisticItems(
       icon: BanknoteIcon,
     },
     {
-      id: "renda-atual",
-      title: "Renda Atual",
+      id: "rendimento-atual",
+      title: "Rendimento Atual",
       value: formatInvestmentAmount(getInvestmentIncome(investment)),
       icon: BanknoteIcon,
     },
