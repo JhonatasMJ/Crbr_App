@@ -28,6 +28,7 @@ import {
   InvestmentActionSheetContent,
   type InvestmentManageAction,
 } from "@/components/ManageInvestment/InvestmentActionSheetContent";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 type ManageInvestmentContentProps = {
   investment: InvestmentsParams;
@@ -74,7 +75,7 @@ export function ManageInvestmentContent({
               numberOfLines={2}
               className="mt-2 font-sans-bold text-lg text-white"
             >
-              {investment.investmentName || investment.name}
+              {capitalizeWords(investment.investmentName || investment.name)}
             </Text>
           </View>
 

@@ -1,5 +1,6 @@
 import type { InvestmentsParams } from "@/types/investmentsParams";
 import type { DeletedInvestmentArchive } from "@/types/investmentTimeline";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 export type QuotaOption = {
   id: string;
@@ -11,7 +12,7 @@ function resolveLabel(
   name?: string,
   fallback = "Investimento",
 ): string {
-  return name?.trim() || fallback;
+  return capitalizeWords(name) || fallback;
 }
 
 export function buildQuotaOptions(

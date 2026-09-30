@@ -1,6 +1,7 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -16,6 +17,7 @@ import { formatAmountPlain } from "@/shared/utils/formatInvestmentAmount";
 import {
   INVESTMENT_STATUS,
   isInvestmentActive,
+  isInvestmentExcludedFromTotals,
 } from "@/shared/constants/investmentStatus";
 import { formatBrDate, formatBrTime } from "@/shared/utils/investmentDates";
 import {
@@ -42,6 +44,7 @@ import {
 } from "@/shared/utils/investmentOperations";
 import { useSnackBarContext } from "./snackbar.context";
 import { useAuth } from "./auth.context";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 type InvestmentsContextType = {
   investments: InvestmentsParams[];
@@ -106,16 +109,25 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
   }, [investments]);
 
   const allInvestments = useMemo(() => {
-    return investments.reduce((acc, investment) => acc + getInvestmentPrincipal(investment), 0);
+    return investments.reduce(
+      (acc, investment) =>
+        isInvestmentExcludedFromTotals(investment.status)
+          ? acc
+          : acc + getInvestmentPrincipal(investment),
+      0
+    );
   }, [investments]);
 
   const TotalBalance = useMemo(() => {
-    return selectedInvestment ? getInvestmentBalance(selectedInvestment) : 0;
+    if (!selectedInvestment || isInvestmentExcludedFromTotals(selectedInvestment.status)) {
+      return 0;
+    }
+    return getInvestmentBalance(selectedInvestment);
   }, [selectedInvestment]);
 
-  function selectInvestment(id: string | undefined) {
+  const selectInvestment = useCallback((id: string | undefined) => {
     setSelectedInvestmentId(id);
-  }
+  }, []);
 
   useEffect(() => {
     let unsubscribeDb: (() => void) | null = null;
@@ -465,7 +477,7 @@ export const InvestmentsProvider = ({ children }: { children: ReactNode }) => {
 
       return {
         investmentId: newRef.key!,
-        investmentName: data.investmentName.trim(),
+        investmentName: capitalizeWords(data.investmentName),
         investmentAmount: data.investmentAmount,
         durationLabel: data.durationLabel,
         startDate: data.startDate,

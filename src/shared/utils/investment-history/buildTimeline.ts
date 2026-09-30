@@ -1,14 +1,22 @@
 import type { InvestmentAmountHistoryEntry } from "@/types/investmentAmountHistory";
-import type { InvestmentsParams } from "@/types/investmentsParams";
+import type {
+  InvestmentsParams,
+  InvestmentWithdrawalEntry,
+} from "@/types/investmentsParams";
 import type {
   DeletedInvestmentArchive,
   InvestmentTimelineEvent,
   LegacyInvestmentHistoryEntry,
 } from "@/types/investmentTimeline";
 import { formatEventLabel } from "./formatEventLabel";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 function resolveInvestmentName(investment: Pick<InvestmentsParams, "name" | "investmentName">) {
-  return investment.investmentName?.trim() || investment.name?.trim() || "Investimento";
+  return (
+    capitalizeWords(investment.investmentName) ||
+    capitalizeWords(investment.name) ||
+    "Investimento"
+  );
 }
 
 function formatDisplayAmount(amount?: string): string {
@@ -71,6 +79,69 @@ function fromLegacyHistoryEntry(
   };
 }
 
+function parseBrDate(date?: string): number {
+  if (!date) return 0;
+  return Date.parse(date.split("/").reverse().join("-")) || 0;
+}
+
+/**
+ * Saques totais marcados pelo dashboard: lista `withdrawals` (um por saque) ou,
+ * em registros antigos, os campos `withdrawn*` — mesma regra do dashboard.
+ */
+function listDashboardWithdrawals(
+  investment: InvestmentsParams,
+): InvestmentWithdrawalEntry[] {
+  if (Array.isArray(investment.withdrawals) && investment.withdrawals.length > 0) {
+    return investment.withdrawals.filter((w) => w && typeof w === "object");
+  }
+  if (investment.withdrawn && investment.withdrawnAmount && investment.withdrawnDate) {
+    return [
+      {
+        amount: investment.withdrawnAmount,
+        date: investment.withdrawnDate,
+        time: investment.withdrawnTime,
+        createdAt: investment.withdrawnAt,
+        description: "Saque total da cota",
+      },
+    ];
+  }
+  return [];
+}
+
+function fromDashboardWithdrawals(
+  investment: InvestmentsParams,
+  ctx: { investmentId?: string; investmentName: string; isArchived?: boolean },
+  existing: InvestmentTimelineEvent[],
+): InvestmentTimelineEvent[] {
+  // O app registra "Saque total" no amountHistory ao concluir um saque pedido por ele;
+  // se o dashboard marcou o mesmo saque (mesma data), mostra só uma vez.
+  const loggedDates = new Set(
+    existing
+      .filter((e) => formatEventLabel(e.type) === "Saque total")
+      .map((e) => e.date),
+  );
+
+  return listDashboardWithdrawals(investment)
+    .filter((w) => !loggedDates.has(w.date))
+    .map((w, index) => {
+      const timestamp =
+        typeof w.createdAt === "number" ? w.createdAt : parseBrDate(w.date);
+      return {
+        id: `${ctx.investmentId ?? "inv"}-withdrawal-${index}-${timestamp}`,
+        investmentId: ctx.investmentId,
+        investmentName: ctx.investmentName,
+        type: "Saque total",
+        label: formatEventLabel("Saque total"),
+        amount: formatDisplayAmount(w.amount),
+        date: w.date || "—",
+        time: w.time,
+        description: w.description?.trim() || "Saque total da cota",
+        timestamp,
+        isArchived: ctx.isArchived,
+      };
+    });
+}
+
 export function collectInvestmentTimelineEvents(
   investment: InvestmentsParams,
   options?: { isArchived?: boolean },
@@ -98,6 +169,8 @@ export function collectInvestmentTimelineEvents(
     }
   }
 
+  const withdrawals = fromDashboardWithdrawals(investment, ctx, events);
+
   if (!events.length && investment.createdAt) {
     const timestamp =
       typeof investment.createdAt === "number"
@@ -122,6 +195,8 @@ export function collectInvestmentTimelineEvents(
     }
   }
 
+  events.push(...withdrawals);
+
   return events;
 }
 
@@ -129,8 +204,8 @@ export function collectDeletedInvestmentTimelineEvents(
   archive: DeletedInvestmentArchive,
 ): InvestmentTimelineEvent[] {
   const investmentName =
-    archive.investmentName?.trim() ||
-    archive.name?.trim() ||
+    capitalizeWords(archive.investmentName) ||
+    capitalizeWords(archive.name) ||
     "Cota encerrada";
 
   const events: InvestmentTimelineEvent[] = [];

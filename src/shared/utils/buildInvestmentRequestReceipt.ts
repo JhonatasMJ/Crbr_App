@@ -6,6 +6,7 @@ import type { InvestmentsParams } from "@/types/investmentsParams";
 import type { UserProfile } from "@/types/user";
 import { formatBrDate, formatBrTime } from "@/shared/utils/investmentDates";
 import { resolveUserDisplayName } from "@/shared/utils/formatName";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 const REQUEST_STATUS: Record<InvestmentPendingActionType, string> = {
   "withdraw-full": INVESTMENT_STATUS.WAITING_WITHDRAW,
@@ -30,7 +31,8 @@ export function buildInvestmentRequestReceipt(
 
   return {
     investmentId: investment.id ?? "",
-    investmentName: investment.investmentName || investment.name || "—",
+    investmentName:
+      capitalizeWords(investment.investmentName || investment.name) || "—",
     investmentAmount: amount,
     durationLabel: investment.duration?.trim() || "4 meses",
     startDate: investment.startDate,

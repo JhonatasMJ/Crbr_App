@@ -8,6 +8,7 @@ import {
 import { InvestmentsParams } from "@/types/investmentsParams";
 import { formatInvestmentAmount } from "./formatInvestmentAmount";
 import { getInvestmentIncome } from "./calculateInvestmentIncome";
+import { isInvestmentExcludedFromTotals } from "@/shared/constants/investmentStatus";
 
 export type StatisticListItem = {
   id: string;
@@ -31,17 +32,21 @@ export function getHeaderStatisticItems(
     ];
   }
 
+  const excluded = isInvestmentExcludedFromTotals(investment.status);
+
   return [
     {
       id: "investido",
       title: "Investido",
-      value: formatInvestmentAmount(investment.investmentAmount || investment.amount),
+      value: formatInvestmentAmount(
+        excluded ? 0 : investment.investmentAmount || investment.amount
+      ),
       icon: BanknoteIcon,
     },
     {
       id: "rendimento-atual",
       title: "Rendimento Atual",
-      value: formatInvestmentAmount(getInvestmentIncome(investment)),
+      value: formatInvestmentAmount(excluded ? 0 : getInvestmentIncome(investment)),
       icon: BanknoteIcon,
     },
     {

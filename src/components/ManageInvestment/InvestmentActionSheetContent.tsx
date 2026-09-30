@@ -25,6 +25,7 @@ import {
   isInvestmentMatured,
 } from "@/shared/utils/investmentOperations";
 import type { InvestmentsParams } from "@/types/investmentsParams";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 export type InvestmentManageAction = "withdraw-full" | "withdraw-partial" | "reinvest";
 
@@ -142,7 +143,7 @@ export function InvestmentActionSheetContent({
       <View className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4">
         <Text className="font-sans-semibold text-sm text-zinc-400">Cota</Text>
         <Text className="mt-1 font-sans-bold text-lg text-white">
-          {investment.investmentName || investment.name}
+          {capitalizeWords(investment.investmentName || investment.name)}
         </Text>
 
         <View className="mt-3 flex-row justify-between border-t border-zinc-800 pt-3">

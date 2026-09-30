@@ -2,6 +2,8 @@ import { get, ref, update } from "firebase/database";
 import {
   INVESTMENT_STATUS,
   isInvestmentActive,
+  isInvestmentInactive,
+  isInvestmentWithdrawn,
 } from "@/shared/constants/investmentStatus";
 import { auth, database } from "@/shared/services/firebase";
 import { formatAmountPlain } from "@/shared/utils/formatInvestmentAmount";
@@ -13,7 +15,10 @@ import {
 import { buildRestartedInvestmentDates } from "@/shared/utils/investmentOperations";
 import type { InvestmentAmountHistoryEntry } from "@/types/investmentAmountHistory";
 import type { InvestmentReinvestmentEntry } from "@/types/investmentAmountHistory";
-import type { InvestmentsParams } from "@/types/investmentsParams";
+import type {
+  InvestmentsParams,
+  InvestmentWithdrawalEntry,
+} from "@/types/investmentsParams";
 
 function buildAmountHistoryEntry(
   type: string,
@@ -40,7 +45,10 @@ function shouldApplyPendingAction(investment: InvestmentsParams): boolean {
   if (!investment.pendingAction || !investment.id) return false;
 
   if (investment.pendingAction.type === "withdraw-full") {
-    return investment.status === INVESTMENT_STATUS.INACTIVE;
+    return (
+      isInvestmentInactive(investment.status) ||
+      isInvestmentWithdrawn(investment.status)
+    );
   }
 
   return isInvestmentActive(investment.status);
@@ -74,19 +82,31 @@ export async function applyPendingInvestmentActionIfNeeded(
   const previousPlain = formatAmountPlain(previousPrincipal);
 
   if (type === "withdraw-full") {
+    // Mesmo formato do dashboard: uma linha em `withdrawals` por saque, `withdrawn*`
+    // espelhando o mais recente. O valor da cota é mantido (o dashboard exige valor
+    // ao editar e usa `withdrawn: true` como saldo zerado até um novo aporte).
+    const now = new Date();
+    const withdrawnAmount = formatAmountPlain(amount);
+    const withdrawnDate = formatBrDate(now);
+    const withdrawnTime = formatBrTime(now);
+    const withdrawalEntry: InvestmentWithdrawalEntry = {
+      amount: withdrawnAmount,
+      date: withdrawnDate,
+      time: withdrawnTime,
+      createdAt: now.getTime(),
+      type: "Saque",
+      description: "Saque total da cota",
+    };
+
     await update(investmentRef, {
-      investmentAmount: "R$ 0,00",
+      status: INVESTMENT_STATUS.WITHDRAWN,
       pendingAction: null,
-      amountHistory: [
-        ...history,
-        buildAmountHistoryEntry(
-          "Saque total",
-          amount,
-          previousPlain,
-          "0,00",
-          "Saque total concluído",
-        ),
-      ],
+      withdrawn: true,
+      withdrawnAmount,
+      withdrawnDate,
+      withdrawnTime,
+      withdrawnAt: now.getTime(),
+      withdrawals: [...(fresh.withdrawals ?? []), withdrawalEntry],
     });
     return;
   }

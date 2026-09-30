@@ -3,6 +3,7 @@ import { Text } from "@/components/ui/text";
 import { INVESTMENT_STATUS } from "@/shared/constants/investmentStatus";
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { ActivityIndicator, Modal, Pressable, View } from "react-native";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 export type InvestmentConfirmSummary = {
   investmentName: string;
@@ -67,7 +68,7 @@ export function InvestmentConfirmModal({
           </Text>
 
           <View className="mb-5 rounded-md bg-zinc-900/80 px-3">
-            <SummaryRow label="Cota" value={summary.investmentName} />
+            <SummaryRow label="Cota" value={capitalizeWords(summary.investmentName)} />
             <SummaryRow
               label="Valor"
               value={formatInvestmentAmount(summary.investmentAmount)}

@@ -1,5 +1,9 @@
 import { useAuth } from "@/context/auth.context";
-import { getFirstName, resolveUserDisplayName } from "@/shared/utils/formatName";
+import {
+  capitalizeWords,
+  getFirstName,
+  resolveUserDisplayName,
+} from "@/shared/utils/formatName";
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
 import { Text, View, Pressable, FlatList, TextInput } from "react-native";
 import {
@@ -15,6 +19,10 @@ import { router } from "expo-router";
 import { useInvestments } from "@/context/investments.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
 import { getHeaderStatisticItems } from "@/shared/utils/statisticData";
+import {
+  isInvestmentExcludedFromTotals,
+  getInvestmentStatusLabel,
+} from "@/shared/constants/investmentStatus";
 import { StatisticCard } from "./StatisticCard";
 import { Button } from "./ui/button";
 
@@ -131,9 +139,28 @@ export function HomeHeader() {
           </View>
         </View>
         <View />
-        <Text className="mt-6 font-sans-bold text-lg text-primary-foreground">
-          Estatísticas
-        </Text>
+        <View className="mt-6 flex-row items-center justify-between gap-3">
+          <Text className="font-sans-bold text-lg text-primary-foreground">
+            Estatísticas
+          </Text>
+          {selectedInvestment ? (
+            <View className="max-w-full flex-row items-center gap-1 rounded-sm bg-primary-foreground px-3 py-1">
+              <Text
+                className="flex-shrink font-sans-semibold text-xs text-white capitalize"
+                numberOfLines={1}
+              >
+                {capitalizeWords(
+                  selectedInvestment.investmentName || selectedInvestment.name
+                ) || "Investimento"}
+              </Text>
+              {isInvestmentExcludedFromTotals(selectedInvestment.status) ? (
+                <Text className="font-sans-medium text-xs text-primary">
+                  · {getInvestmentStatusLabel(selectedInvestment.status)}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
         <FlatList
           data={getHeaderStatisticItems(selectedInvestment)}
           keyExtractor={(item) => item.id}

@@ -9,7 +9,7 @@ import { useInvestments } from "@/context/investments.context";
 export default function ManageInvestmentScreen() {
   const router = useRouter();
   const { investmentId } = useLocalSearchParams<{ investmentId?: string }>();
-  const { investments, loading, selectInvestment } = useInvestments();
+  const { investments, loading } = useInvestments();
 
   const investment = useMemo(
     () => investments.find((item) => item.id === investmentId),
@@ -21,12 +21,6 @@ export default function ManageInvestmentScreen() {
       router.replace("/(drawer)");
     }
   }, [loading, investment, investmentId, router]);
-
-  useEffect(() => {
-    if (investmentId) {
-      selectInvestment(investmentId);
-    }
-  }, [investmentId, selectInvestment]);
 
   if (loading) {
     return <DataLoading />;

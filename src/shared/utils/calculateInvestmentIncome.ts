@@ -5,6 +5,7 @@ import {
 } from "@/shared/constants/investmentStatus";
 import { isValid, parse } from "date-fns";
 import { BR_DATE_FORMAT } from "@/shared/utils/investmentDates";
+import { capitalizeWords } from "@/shared/utils/formatName";
 
 const TOTAL_INCOME_RATE = 0.1;
 
@@ -44,6 +45,40 @@ export function getInvestmentIncome(investment: InvestmentsParams): number {
   });
 }
 
+export type InvestmentWithdrawalInfo = {
+  amount: number;
+  date?: string;
+};
+
+/**
+ * Último saque total de uma cota sacada. O dashboard grava em `withdrawals`
+ * (ou `withdrawn*` em registros antigos);
+ * o app registra uma entrada "Saque total" no amountHistory.
+ */
+export function getInvestmentWithdrawal(
+  investment: InvestmentsParams
+): InvestmentWithdrawalInfo | null {
+  const withdrawals = investment.withdrawals ?? [];
+  const latest = withdrawals[withdrawals.length - 1];
+  if (latest?.amount) {
+    return { amount: parseAmount(latest.amount), date: latest.date };
+  }
+
+  if (investment.withdrawn && investment.withdrawnAmount) {
+    return {
+      amount: parseAmount(investment.withdrawnAmount),
+      date: investment.withdrawnDate,
+    };
+  }
+
+  const entry = [...(investment.amountHistory ?? [])]
+    .reverse()
+    .find((item) => item.type?.trim().toLowerCase() === "saque total");
+  if (!entry) return null;
+
+  return { amount: parseAmount(entry.amount), date: entry.createdDate };
+}
+
 /** Principal + renda (renda zerada se não estiver Ativo). */
 export function getInvestmentBalance(investment: InvestmentsParams): number {
   if (
@@ -59,7 +94,7 @@ export function getInvestmentBalance(investment: InvestmentsParams): number {
 export function investmentToCardItem(investment: InvestmentsParams) {
   return {
     id: investment.id,
-    name: investment.investmentName || investment.name,
+    name: capitalizeWords(investment.investmentName || investment.name) || undefined,
     amount: getInvestmentBalance(investment),
   };
 }

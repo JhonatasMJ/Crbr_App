@@ -1,8 +1,14 @@
 import { formatInvestmentAmount } from "@/shared/utils/formatInvestmentAmount";
-import { getInvestmentProgressInfo } from "@/shared/utils/calculateInvestmentIncome";
-import { getInvestmentStatusLabel, isInvestmentActive } from "@/shared/constants/investmentStatus";
-import { Text, View } from "react-native";
-import { Pressable } from "react-native-gesture-handler";
+import {
+  getInvestmentProgressInfo,
+  type InvestmentWithdrawalInfo,
+} from "@/shared/utils/calculateInvestmentIncome";
+import {
+  getInvestmentStatusLabel,
+  isInvestmentActive,
+  isInvestmentWithdrawn,
+} from "@/shared/constants/investmentStatus";
+import { Pressable, Text, View } from "react-native";
 import Swipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import { Progress } from "./ui/progress";
 import { INVESTMENT_CARD_STYLE, InvestmentCardVariant } from "@/shared/strategies/investment-card";
@@ -18,6 +24,8 @@ type InvestmentCardProps = {
   startDate: string;
   endDate: string;
   duration: string;
+  /** Só para cotas sacadas: valor e data do saque total. */
+  withdrawal?: InvestmentWithdrawalInfo | null;
 };
 
 function remainingLabel(days: number): string {
@@ -36,8 +44,10 @@ export function InvestmentCard({
   startDate,
   endDate,
   duration,
+  withdrawal,
 }: InvestmentCardProps) {
   const active = isInvestmentActive(status);
+  const withdrawn = isInvestmentWithdrawn(status);
   const statusLabel = getInvestmentStatusLabel(status);
   const progress = getInvestmentProgressInfo({
     startDate,
@@ -62,7 +72,7 @@ export function InvestmentCard({
           <RightAction investmentId={investmentId} />
         )}
       >
-        <Pressable onPress={onPress} android_disableSound>
+        <Pressable onPress={onPress}>
           <View className={`rounded-md p-4 ${style.containerBg}`}>
             <View className="flex-row items-start justify-between gap-2">
               <Text
@@ -76,11 +86,28 @@ export function InvestmentCard({
                 {statusLabel}
               </Text>
             </View>
-            <Text className={`font-sans-bold text-2xl ${style.amountText}`}>
-              {formatInvestmentAmount(amount)}
-            </Text>
+            {withdrawn ? (
+              <View className="mt-1">
+                <Text className={`font-sans-medium text-sm ${style.helperText}`}>
+                  Valor sacado
+                </Text>
+                <Text className={`font-sans-bold text-2xl ${style.helperText}`}>
+                  {withdrawal ? formatInvestmentAmount(withdrawal.amount) : "—"}
+                </Text>
+              </View>
+            ) : (
+              <Text className={`font-sans-bold text-2xl ${style.amountText}`}>
+                {formatInvestmentAmount(amount)}
+              </Text>
+            )}
 
-            {!active ? (
+            {withdrawn ? (
+              <Text className={`mt-2 font-sans-medium text-sm ${style.helperText}`}>
+                {withdrawal?.date
+                  ? `Saque concluído em ${withdrawal.date}`
+                  : "Saque concluído"}
+              </Text>
+            ) : !active ? (
               <Text className={`mt-2 font-sans-medium text-sm ${style.helperText}`}>
                 Rendimento inicia quando o status for Ativo
               </Text>

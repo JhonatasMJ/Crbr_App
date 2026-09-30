@@ -9,8 +9,13 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { InvestmentCard } from "@/components/InvestmentCard";
 import { DataLoading } from "@/components/DataLoading";
 import { Text } from "@/components/ui/text";
+import { Wallet } from "lucide-react-native";
 import { useInvestments } from "@/context/investments.context";
-import { investmentToCardItem } from "@/shared/utils/calculateInvestmentIncome";
+import {
+  getInvestmentWithdrawal,
+  investmentToCardItem,
+} from "@/shared/utils/calculateInvestmentIncome";
+import { isInvestmentWithdrawn } from "@/shared/constants/investmentStatus";
 
 function HomeListHeader() {
   return (
@@ -35,6 +40,20 @@ function HomeListHeader() {
       </View>
       <View className="h-2" />
     </>
+  );
+}
+
+function EmptyInvestments() {
+  return (
+    <View className="mt-10 items-center px-6">
+      <Wallet size={32} color="#71717a" />
+      <Text className="mt-3 text-center font-sans-semibold text-lg text-white">
+        Nenhum investimento ainda
+      </Text>
+      <Text className="mt-1 text-center font-sans-medium text-sm text-zinc-500">
+        Seus investimentos aparecerão aqui.
+      </Text>
+    </View>
   );
 }
 
@@ -64,8 +83,10 @@ export default function Home() {
       <FlatList
         className="flex-1"
         data={investments}
+        extraData={selectedInvestment?.id}
         keyExtractor={(item) => item.id ?? ""}
         ListHeaderComponent={<HomeListHeader />}
+        ListEmptyComponent={EmptyInvestments}
         renderItem={({ item }) => {
           const card = investmentToCardItem(item);
           const investmentId = item.id ?? "";
@@ -82,6 +103,11 @@ export default function Home() {
               startDate={item.startDate}
               endDate={item.endDate}
               duration={item.duration}
+              withdrawal={
+                isInvestmentWithdrawn(item.status)
+                  ? getInvestmentWithdrawal(item)
+                  : null
+              }
             />
           );
         }}

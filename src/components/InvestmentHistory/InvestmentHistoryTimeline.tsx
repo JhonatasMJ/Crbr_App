@@ -14,6 +14,11 @@ import { groupEventsByDate } from "@/shared/utils/investment-history/groupEvents
 
 type AmountTone = "credit" | "debit" | "neutral";
 
+/** "14:32:05" → "14:32". */
+function formatTimeWithoutSeconds(time: string): string {
+  return time.trim().replace(/^(\d{1,2}:\d{2}):\d{2}$/, "$1");
+}
+
 function getEventIcon(type: string): LucideIcon {
   const key = type.trim().toLowerCase();
   if (key.includes("saque") || key.includes("withdraw")) return ArrowDownLeft;
@@ -29,7 +34,8 @@ function getAmountTone(type: string): AmountTone {
   if (
     key.includes("saque") ||
     key.includes("withdraw") ||
-    key.includes("exclus")
+    key.includes("exclus") ||
+    key.includes("redu")
   ) {
     return "debit";
   }
@@ -53,7 +59,7 @@ function getSubtitle(event: InvestmentTimelineEvent): string {
   }
 
   if (event.time) {
-    parts.push(event.time);
+    parts.push(formatTimeWithoutSeconds(event.time));
   } else if (event.date && event.date !== "—") {
     parts.push(event.date);
   }
