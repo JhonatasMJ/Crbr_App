@@ -15,7 +15,12 @@ import {
   investmentsSchema,
   type InvestmentFormValues,
 } from "@/shared/schemas/investments";
-import { formatBrDate, getEndDate } from "@/shared/utils/investmentDates";
+import {
+  formatBrDate,
+  getEndDate,
+  isBusinessDay,
+  nextBusinessDay,
+} from "@/shared/utils/investmentDates";
 import { useInvestments } from "@/context/investments.context";
 import { useAuth } from "@/context/auth.context";
 import { useSnackBarContext } from "@/context/snackbar.context";
@@ -23,6 +28,8 @@ import { serializeInvestmentReceipt } from "@/shared/utils/parseInvestmentReceip
 import { resolveUserDisplayName } from "@/shared/utils/formatName";
 import { useRouter } from "expo-router";
 import type { Resolver } from "react-hook-form";
+
+const isNonBusinessDay = (date: Date) => !isBusinessDay(date);
 
 const defaultFormValues: InvestmentFormValues = {
   duration: "4 meses",
@@ -40,7 +47,9 @@ export function InvestmentsForm() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmSummary, setConfirmSummary] =
     useState<InvestmentConfirmSummary | null>(null);
-  const [startDate, setStartDate] = useState(() => new Date());
+  const [startDate, setStartDate] = useState(() =>
+    nextBusinessDay(new Date()),
+  );
   const [formKey, setFormKey] = useState(0);
 
   const { control, handleSubmit, reset } = useForm<InvestmentFormValues>({
@@ -50,7 +59,7 @@ export function InvestmentsForm() {
 
   function clearForm() {
     reset(defaultFormValues);
-    setStartDate(new Date());
+    setStartDate(nextBusinessDay(new Date()));
     setFormKey((k) => k + 1);
   }
 
@@ -148,6 +157,7 @@ export function InvestmentsForm() {
             label="Data de início"
             value={startDate}
             onChange={setStartDate}
+            isDateDisabled={isNonBusinessDay}
           />
           <DatePickerLabel label="Data final" value={endDate} readOnly />
         </View>

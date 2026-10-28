@@ -9,9 +9,17 @@ import {
   fromCalendarKey,
   toCalendarKey,
 } from "@/shared/utils/investmentDates";
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  startOfMonth,
+  subMonths,
+} from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { Calendar, type DateData } from "react-native-calendars";
+import type { MarkedDates } from "react-native-calendars/src/types";
 
 const fieldClassName =
   "text-foreground min-h-11 py-2 text-base leading-5 border-b-2 border-input";
@@ -37,7 +45,18 @@ type DatePickerLabelProps = {
   onChange?: (date: Date) => void;
   readOnly?: boolean;
   className?: string;
+  /** Dias que não podem ser selecionados (aparecem desabilitados). */
+  isDateDisabled?: (date: Date) => boolean;
 };
+
+/** Dias visíveis no calendário: mês atual e os vizinhos (dias de borda). */
+function getVisibleDays(monthKey: string): Date[] {
+  const month = fromCalendarKey(monthKey);
+  return eachDayOfInterval({
+    start: startOfMonth(subMonths(month, 1)),
+    end: endOfMonth(addMonths(month, 1)),
+  });
+}
 
 export function DatePickerLabel({
   label,
@@ -45,25 +64,40 @@ export function DatePickerLabel({
   onChange,
   readOnly = false,
   className,
+  isDateDisabled,
 }: DatePickerLabelProps) {
   const [open, setOpen] = useState(false);
   const [pendingKey, setPendingKey] = useState(() => toCalendarKey(value));
+  const [visibleMonthKey, setVisibleMonthKey] = useState(pendingKey);
 
   useEffect(() => {
-    if (open) setPendingKey(toCalendarKey(value));
+    if (!open) return;
+    const key = toCalendarKey(value);
+    setPendingKey(key);
+    setVisibleMonthKey(key);
   }, [open, value]);
 
-  const markedDates = useMemo(
-    () => ({
-      [pendingKey]: {
-        selected: true,
-        selectedColor: colors.primary,
-      },
-    }),
-    [pendingKey],
-  );
+  const markedDates = useMemo(() => {
+    const marks: MarkedDates = {};
+    if (isDateDisabled) {
+      for (const day of getVisibleDays(visibleMonthKey)) {
+        if (isDateDisabled(day)) {
+          marks[toCalendarKey(day)] = {
+            disabled: true,
+            disableTouchEvent: true,
+          };
+        }
+      }
+    }
+    marks[pendingKey] = {
+      selected: true,
+      selectedColor: colors.primary,
+    };
+    return marks;
+  }, [pendingKey, visibleMonthKey, isDateDisabled]);
 
   function handleDayPress(day: DateData) {
+    if (isDateDisabled?.(fromCalendarKey(day.dateString))) return;
     setPendingKey(day.dateString);
   }
 
@@ -103,6 +137,7 @@ export function DatePickerLabel({
               <Calendar
                 current={pendingKey}
                 onDayPress={handleDayPress}
+                onMonthChange={(month) => setVisibleMonthKey(month.dateString)}
                 markedDates={markedDates}
                 theme={calendarTheme}
                 enableSwipeMonths
