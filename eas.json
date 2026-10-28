@@ -7,12 +7,14 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "android": {
         "gradleCommand": ":app:assembleDebug --no-configure-on-demand"
       }
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "android": {
         "gradleCommand": ":app:assembleRelease --no-configure-on-demand"
       }
@@ -20,6 +22,7 @@
     "production": {
       "autoIncrement": true,
       "environment": "production",
+      "channel": "production",
       "android": {
         "gradleCommand": ":app:bundleRelease --no-configure-on-demand"
       }
